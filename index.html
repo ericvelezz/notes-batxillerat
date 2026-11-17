@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Les meves notes</title>
+<script>try{var _t=localStorage.getItem('notes_theme');if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t}catch(e){}</script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.21.3/index.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#0b1026; --card:#1a2147; --card2:#121a3a; --text:#f2f4ff; --muted:#b4bdea;
+  --blue:#7c9cff; --orange:#f4b26e; --purple:#b49cf5; --green:#8fd9a0; --pink:#f59cc0;
+  --radius:32px; --nav-h:78px; --w:560px;
+  --ink:#fff; --ink2:#dbe1ff; --line:#ffffff1f; --track:#ffffff33; --hover:#ffffff0d; --m1:#242d66; --m2:#1a2149;
+  --navc:#cdd5ff; --navon:#fff; --okc:#8fd9a0; --warnc:#f4b26e; --linkc:#7c9cff; color-scheme:dark;
+}
+:root[data-theme=light]{
+  --bg:#eef1fb; --card:#ffffff; --card2:#e6eaf8; --text:#1a2147; --muted:#56608f;
+  --ink:#1a2147; --ink2:#3b4575; --line:#1a214726; --track:#1a21471f; --hover:#1a21470d; --m1:#ffffff; --m2:#f3f5ff;
+  --navc:#56608f; --navon:#1a2147; --okc:#1d8a4c; --warnc:#b45309; --linkc:#3b5bdb; color-scheme:light;
+}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;font-weight:500}
+#app{max-width:var(--w);margin:0 auto;min-height:100%;padding:calc(env(safe-area-inset-top,0px) + 24px) 18px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 28px)}
+h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.sub{color:var(--muted);font-size:15px;margin-bottom:22px}
+.screen{display:none}
+.screen.on{display:block;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* targetes d'assignatura */
+.subject{display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:16px;border-radius:var(--radius);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--c) 42%,var(--m1)),color-mix(in srgb,var(--c) 24%,var(--m2)));cursor:pointer;transition:transform .2s}
+.subject:active{transform:scale(.98)}
+.emoji{width:60px;height:60px;border-radius:20px;background:var(--c);display:grid;place-items:center;font-size:30px;flex:none}
+.sname{font-size:21px;font-weight:800;flex:1;min-width:0}
+.sname small{display:block;font-size:13px;color:var(--ink2);font-weight:500;margin-top:3px}
+.grade{font-size:34px;font-weight:800;color:var(--ink)}
+.ring{width:54px;height:54px;flex:none}
+.chev{color:var(--muted);font-size:22px}
+.tag{display:inline-block;background:var(--card2);color:var(--muted);font-size:12px;padding:4px 10px;border-radius:99px;margin-bottom:14px}
+
+/* estat buit i botons */
+.empty{background:var(--card);border-radius:var(--radius);padding:34px 24px;text-align:center}
+.empty .big{font-size:52px;margin-bottom:10px}
+.empty p{color:var(--muted);margin-bottom:20px;line-height:1.5}
+.btn{display:block;width:100%;border:0;border-radius:99px;padding:18px;font:inherit;font-weight:800;font-size:17px;
+  background:var(--blue);color:#0b1026;cursor:pointer;margin-top:12px;transition:transform .2s}
+.btn:active{transform:scale(.97)}
+.btn.soft{background:var(--card2);color:var(--text)}
+.box{background:var(--card);border-radius:var(--radius);padding:22px;margin-bottom:16px;line-height:1.5}
+.box b{font-size:18px}
+.ok{color:var(--okc)} .warn{color:var(--warnc)}
+
+/* barra inferior */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card2);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);z-index:10}
+nav .in{max-width:min(var(--w),720px);margin:0 auto;display:flex;height:var(--nav-h)}
+nav button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;position:relative;transition:color .2s}
+nav button span{font-size:26px;filter:grayscale(.6) opacity(.8);transition:transform .25s,filter .25s}
+nav button.on{color:var(--blue)}
+nav button.on span{filter:none;transform:translateY(-2px) scale(1.08)}
+nav button.on::before{content:"";position:absolute;top:0;width:34px;height:4px;border-radius:0 0 6px 6px;background:var(--blue)}
+
+/* llistes en graella */
+.grid{display:flex;flex-direction:column;gap:16px}
+.grid>*{margin:0}
+.span{grid-column:1/-1}
+.subject.set{cursor:default}
+.ic{border:0;background:var(--card2);width:46px;height:46px;border-radius:16px;font-size:20px;cursor:pointer;flex:none}
+h2{font-size:20px;font-weight:800;margin:28px 0 14px}
+/* rànquing */
+.chips{display:flex;gap:10px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px}
+.chip{border:0;border-radius:99px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;background:var(--card);color:var(--muted);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--blue);color:#0b1026}
+.rankwrap{max-width:720px}
+.rk{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:26px;margin-bottom:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 42%,var(--m1)),color-mix(in srgb,var(--c) 24%,var(--m2)))}
+.pos{width:36px;text-align:center;font-size:26px;font-weight:800;color:var(--muted)}
+.emoji.sm{width:48px;height:48px;border-radius:16px;font-size:24px}
+.grade.sm{font-size:26px}
+.bar{height:8px;border-radius:9px;background:var(--track);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c);border-radius:9px}
+.rk .gr{text-align:right;flex:none}
+.rk .gr small{display:block;font-size:12px;color:var(--ink2);margin-top:2px}
+.rk.no{opacity:.82}
+.rk{flex-wrap:wrap;row-gap:10px}
+.rk .ts{flex-basis:100%;font-size:13px;color:var(--ink2);padding-left:50px}
+.rkinfo{color:var(--muted);font-size:14px;line-height:1.45;margin:0 4px 16px}
+/* estadístiques */
+.st{border-radius:var(--radius);padding:22px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 42%,var(--m1)),color-mix(in srgb,var(--c) 24%,var(--m2)))}
+.st .lbl{color:var(--muted);font-size:14px;margin-bottom:6px}
+.st .num{font-size:42px;font-weight:800;color:var(--ink)}
+.st p{font-size:17px;line-height:1.4;font-weight:700}
+.cols{display:flex;gap:16px;align-items:flex-end;height:150px;margin-top:16px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;font-size:13px;color:var(--muted)}
+.col b{color:var(--text);font-size:15px}
+.col i{width:100%;max-width:70px;border-radius:14px 14px 6px 6px;background:var(--c)}
+.ev{display:flex;align-items:center;gap:12px;margin-top:16px}
+.mb{display:flex;gap:6px;align-items:flex-end;height:44px;flex:none}
+.mb span{width:14px;border-radius:5px 5px 2px 2px;background:var(--c)}
+.ev small{color:var(--muted);font-size:13px;white-space:nowrap}
+/* finestra de formulari */
+.modal{position:fixed;inset:0;background:#05081acc;display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92%;overflow:auto;border-radius:32px 32px 0 0;padding:26px calc(26px) calc(26px + env(safe-area-inset-bottom,0px));animation:in .25s}
+.sheet h2{margin-top:0}
+.sheet label{display:block;color:var(--muted);font-size:14px;margin:16px 0 8px}
+.sheet input{width:100%;padding:16px;border-radius:18px;border:0;background:var(--card2);color:var(--text);font:inherit;font-size:17px}
+.sw,.qe{display:flex;flex-wrap:wrap;gap:10px}
+.sw button{width:42px;height:42px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.sw button.on{border-color:var(--text)}
+.qe button{border:0;background:var(--card2);border-radius:14px;width:44px;height:44px;font-size:22px;cursor:pointer}
+.btn.danger{background:#f58c8c}
+.err{color:var(--warnc);margin-top:10px;min-height:20px}
+/* compte */
+.f label{display:block;color:var(--muted);font-size:14px;margin:16px 0 8px}
+.f input{width:100%;padding:16px;border-radius:18px;border:0;background:var(--card2);color:var(--text);font:inherit;font-size:17px}
+.msg{margin-top:14px;line-height:1.45;font-size:15px}
+.link{background:none;border:0;color:var(--linkc);font:inherit;font-weight:700;cursor:pointer;margin-top:14px;padding:8px 0}
+.prof{display:flex;align-items:center;gap:16px}
+.rowd{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--line)}
+.rowd span{color:var(--muted)}
+.rowd b{font-size:16px;overflow-wrap:anywhere;text-align:right}
+.btn:disabled{opacity:.6;cursor:default}
+#btnOut{margin-bottom:16px}
+
+/* ordinador i tauleta: contingut centrat, mateix disseny */
+@media (min-width:900px){
+  :root{--w:1080px}
+  #app{padding-left:40px;padding-right:40px}
+  h1{font-size:38px;text-align:center}
+  .sub{text-align:center;margin-bottom:28px}
+  .screen>h2,#ajust h2{text-align:center}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr)}
+  .grid>.tag{grid-column:1/-1;margin:0 auto}
+  .tag{display:block;width:fit-content;margin:0 auto 18px}
+  .chips{justify-content:center}
+  .grade.sm{min-width:64px;text-align:right}
+  .empty,.box,.btn,.rankwrap,.rowbtn{max-width:720px;margin-left:auto;margin-right:auto}
+  .modal{align-items:center}
+  .sheet{border-radius:32px}
+}
+@media (min-width:1400px){
+  :root{--w:1320px}
+  .grid{grid-template-columns:repeat(3,1fr)}
+}
+/* navegació amb més llum */
+nav button{color:var(--navc)}
+nav button span{font-size:24px;filter:none;width:54px;height:34px;display:grid;place-items:center;border-radius:14px;transition:background .25s,box-shadow .25s}
+nav button.on{color:var(--navon)}
+nav button.on span{background:var(--blue);transform:none;box-shadow:0 4px 16px #7c9cff66}
+nav button.on::before{display:none}
+/* detall, estadístiques */
+.subject.hero{cursor:default;margin-bottom:6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.g2 .st{padding:18px}.g2 .st p{font-size:15px}
+.hero2{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.hero2>div:last-child{flex:1;min-width:200px}
+.lp{display:flex;align-items:center;gap:14px;margin-top:16px}
+.lpm{flex:1;min-width:0}
+.lpn{font-weight:800;font-size:16px;display:flex;justify-content:space-between;gap:8px}
+.lpn small{color:var(--ink2);font-weight:500;font-size:12px;white-space:nowrap}
+.trk{position:relative;height:12px;border-radius:9px;background:var(--track);margin-top:8px}
+.trk i{display:block;height:100%;border-radius:9px;background:var(--c)}
+.trk u{position:absolute;left:50%;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--ink)}
+.lp b{font-size:22px;width:48px;text-align:right}
+.chart{width:100%;height:auto;margin-top:10px}
+.prevrow{display:flex;align-items:center;gap:14px;padding:14px;border-radius:24px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 42%,var(--m1)),color-mix(in srgb,var(--c) 24%,var(--m2)));margin-bottom:6px}
+.sheet .cpick{display:flex;align-items:center;gap:12px;margin:12px 0 0;padding:10px 14px;border-radius:18px;background:var(--card2);border:2px solid transparent;cursor:pointer;color:var(--text);font-weight:700;font-size:15px}
+.sheet .cpick.on{border-color:var(--text)}
+.sheet .cpick input{width:42px;height:42px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;flex:none;-webkit-appearance:none;appearance:none}
+.cpick input::-webkit-color-swatch-wrapper{padding:0}
+.cpick input::-webkit-color-swatch{border:0;border-radius:50%}
+.cpick input::-moz-color-swatch{border:0;border-radius:50%}
+.cpick b{margin-left:auto;font-weight:500;color:var(--muted);font-size:13px}
+.rowbtn{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-weight:700;font-size:15px;padding:16px 20px;border-radius:99px;cursor:pointer;margin-bottom:12px;transition:background .2s,color .2s}
+.rowbtn:hover{background:var(--hover);color:var(--text)}
+.rowbtn .chev{margin-left:auto;transition:transform .25s}
+.rowbtn[aria-expanded=true] .chev{transform:rotate(90deg)}
+#authPass{margin-top:16px}#authPass:empty{display:none}
+#mailPanel:not([hidden]),#passPanel:not([hidden]),#simPanel:not([hidden]),#goalPanel:not([hidden]){animation:in .3s ease}
+.chip[data-goal]{flex:1;min-width:0;padding:12px 0;text-align:center;font-size:16px}
+@media (min-width:900px){.g2{grid-template-columns:repeat(4,1fr)}.grid.sims{grid-template-columns:repeat(2,1fr);align-items:start}}
+@media (max-width:480px){.subject{gap:12px;padding:18px 16px}.emoji{width:54px;height:54px;font-size:27px}.sname{font-size:18px}.grade{font-size:28px}.ring{width:46px;height:46px}}
+.box .chip{background:var(--card2)}
+.box .chip.on{background:var(--blue);color:#0b1026}
+.sheet .chk{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--text);font-size:15px}
+.sheet input[type=checkbox]{width:22px;height:22px;padding:0;flex:none}
+.qe button.qmore{border-radius:50%;background:var(--blue);color:#0b1026;font-weight:800;font-size:26px;line-height:1}
+emoji-picker{width:100%;height:min(420px,55vh);margin-bottom:12px;--background:var(--card);--border-color:var(--line);--border-size:1px;--indicator-color:var(--blue);--input-border-color:var(--line);--input-font-color:var(--text);--input-placeholder-color:var(--muted);--category-font-color:var(--muted);--button-hover-background:var(--card2);--button-active-background:var(--card2);--outline-color:var(--blue);--num-columns:8}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section class="screen on" id="s-assignatures">
+    <div id="head"><h1>Assignatures</h1>
+    <p class="sub">Les teves notes, d’un cop d’ull</p></div>
+    <div id="detall"></div>
+    <div id="llista" class="grid"></div>
+    <div class="empty" id="buit">
+      <div class="big">📚</div>
+      <p>Encara no tens cap assignatura.<br>Crea la primera i afegeix-hi els teus exàmens.</p>
+      <button class="btn" data-add="1">＋ Afegir assignatura</button>
+    </div>
+  </section>
+
+  <section class="screen" id="s-rankings">
+    <h1>Rànquing</h1>
+    <p class="sub">Les teves assignatures, de millor a pitjor</p>
+    <div id="rank"></div>
+  </section>
+
+  <section class="screen" id="s-stats">
+    <h1>Estadístiques</h1>
+    <p class="sub">Com evoluciona el teu rendiment</p>
+    <div id="stats"></div>
+  </section>
+
+  <section class="screen" id="s-ajustos">
+    <h1>Ajustos</h1>
+    <p class="sub">Personalitza l’aplicació</p>
+    <div id="ajust"></div>
+  </section>
+
+  <section class="screen" id="s-compte">
+    <h1>Compte</h1>
+    <p class="sub">El teu perfil i la sincronització</p>
+    <div id="auth"></div>
+    <div class="box"><b>Connexió amb Supabase</b><p id="estat" style="margin-top:8px"></p></div>
+    <button class="btn soft" id="btnProva">Provar la connexió</button>
+    <div id="authPass"></div>
+  </section>
+
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<nav><div class="in">
+  <button class="on" data-s="assignatures"><span>📚</span>Assignatures</button>
+  <button data-s="rankings"><span>🏆</span>Rànquing</button>
+  <button data-s="stats"><span>📊</span>Estadístiques</button>
+  <button data-s="ajustos"><span>⚙️</span>Ajustos</button>
+  <button data-s="compte"><span>👤</span>Compte</button>
+</div></nav>
+
+<script>
+// ---- Configuració de Supabase (aquí enganxaràs les teves dues dades) ----
+const SUPABASE_URL = "https://cbzwjxjpvblxzlonpzta.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_m9PaEPG633oHNTCOQp6m5Q_8ZyUWIqE";
+
+let sb = null;
+try {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) { console.error(e); }
+
+// ---- Navegació ----
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + b.dataset.s));
+  window.scrollTo({top: 0});
+}));
+
+// ---- Dades de la vista prèvia (no es desen; a la fase 4 seran les teves dades reals) ----
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COLORS = ['#7c9cff','#f4b26e','#b49cf5','#8fd9a0','#f59cc0','#f2d37a','#6fd6d6'];
+let subjects = [], rankK = 'g', draft = null, user = null, cur = { sid: null, term: null }, dataErr = null, dataUid = null, xd = null, simGoal = null, simOpen = false, goalOpen = false;
+const fmt = n => n == null ? '—' : n.toFixed(1).replace('.', ',');
+const mean = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+const gen = s => mean(s.t);
+const val = (s, k) => k === 'g' ? gen(s) : s.t[+k];
+const buit = (e, t) => `<div class="empty"><div class="big">${e}</div><p>${t}</p></div>`;
+const TAG = '';
+const ring = (c, p) => `<svg class="ring" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" style="stroke:var(--track)" stroke-width="6"/>
+  <circle cx="27" cy="27" r="22" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round"
+  stroke-dasharray="${(p * 138.2).toFixed(1)} 138.2" transform="rotate(-90 27 27)"/></svg>`;
+
+function renderAll() { renderLlista(); renderRank(); renderStats(); renderAjust(); }
+
+const TN = ['1r trimestre', '2n trimestre', '3r trimestre'];
+const fx = n => n == null ? '—' : (+n.toFixed(2)).toString().replace('.', ',');
+const pf = n => (Math.round(n * 10) / 10).toString().replace('.', ',');
+const num = v => { v = String(v).trim().replace(',', '.'); return v === '' ? null : Number(v); };
+const fd = d => new Date(d + 'T00:00').toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' });
+const gateH = () => buit('🔐', 'Inicia sessió a l’apartat Compte per veure i guardar les teves notes.') + '<button class="btn" data-goto="compte">Anar a Compte</button>';
+function gate(el) {
+  if (!user) { el.innerHTML = gateH(); return true; }
+  if (dataErr) { el.innerHTML = buit('⚠️', 'No s’han pogut carregar les dades: ' + esc(dataErr)); return true; }
+  return false;
+}
+// Càlcul d'un trimestre: punts acumulats, mitjana dels exàmens fets, % avaluat i pendent
+function calc(ex) {
+  const done = ex.filter(e => e.grade != null), tw = ex.reduce((a, e) => a + e.weight, 0), ew = done.reduce((a, e) => a + e.weight, 0);
+  if (tw > 100.0001) return { over: true, tw, ev: 0, pend: 100, pts: null, avg: null, n: done.length };
+  const pts = done.reduce((a, e) => a + e.grade * e.weight / 100, 0);
+  return { over: false, tw, ev: ew, pend: Math.max(0, 100 - ew), pts, avg: ew > 0 ? pts / (ew / 100) : null, n: done.length };
+}
+async function loadData() {
+  const [a, b] = await Promise.all([
+    sb.from('subjects').select('*').order('position').order('created_at'),
+    sb.from('exams').select('*').order('created_at')]);
+  if (a.error || b.error) { dataErr = (a.error || b.error).message; return; }
+  dataErr = null;
+  subjects = a.data.map(r => {
+    const ex = b.data.filter(e => e.subject_id === r.id).map(e => ({ ...e, grade: e.grade == null ? null : +e.grade, weight: +e.weight }));
+    const cs = [1, 2, 3].map(t => calc(ex.filter(e => e.term === t)));
+    return { id: r.id, n: r.name, e: r.emoji || '📘', c: /^#[0-9a-fA-F]{6}$/.test(r.color || '') ? r.color : COLORS[0], ex, cs, t: cs.map(c => c.avg), x: ex.filter(e => e.grade != null).length };
+  });
+}
+function renderLlista() {
+  const l = $('llista'), det = $('detall'), head = $('head');
+  if (!user || dataErr) { head.hidden = false; det.innerHTML = ''; $('buit').style.display = 'none'; l.innerHTML = '<div class="span">' + (!user ? gateH() : buit('⚠️', 'No s’han pogut carregar les dades: ' + esc(dataErr))) + '</div>'; return; }
+  const cs = cur.sid && subjects.find(x => x.id === cur.sid);
+  if (cs) { head.hidden = true; l.innerHTML = ''; $('buit').style.display = 'none'; det.innerHTML = cur.term == null ? renderSub(cs) : renderTerm(cs, cur.term); return; }
+  cur = { sid: null, term: null }; head.hidden = false; det.innerHTML = '';
+  $('buit').style.display = subjects.length ? 'none' : '';
+  l.innerHTML = subjects.map(s => {
+    const g = gen(s);
+    return `<div class="subject" data-open="${s.id}" style="--c:${s.c}"><div class="emoji">${s.e}</div>
+      <div class="sname">${esc(s.n)}<small>${g == null ? 'Encara sense notes' : 'Nota actual'}</small></div>
+      <div class="grade">${fmt(g)}</div>${ring(s.c, (g || 0) / 10)}<div class="chev">›</div></div>`;
+  }).join('');
+}
+// ---- Simuladors del trimestre (càlculs en memòria: no es desa res a Supabase) ----
+function simH(s, i) {
+  const pend = s.ex.filter(e => e.term === i + 1 && e.grade == null);
+  return `<p class="msg" style="margin-top:0">Simula un examen que encara no has fet. No es desa ni canvia les teves notes reals.</p>
+    ${pend.length ? `<div class="chips" style="margin:12px 0 0">${pend.map(e => `<button class="chip" data-simfill="${e.id}">${esc(e.name)} · ${pf(e.weight)}%</button>`).join('')}</div>` : ''}
+    <div class="f"><label>Nom de l’examen</label><input id="sn" maxlength="40" placeholder="Per exemple: Examen final">
+    <label>Nota hipotètica (0-10)</label><input id="sg" inputmode="decimal" placeholder="7,5">
+    <label>Pes de l’examen (%)</label><input id="sw" inputmode="decimal" placeholder="30"></div><div id="simOut"><p class="msg">Escriu la nota i el pes per veure el resultat.</p></div>`;
+}
+function simCalc() {
+  const s = subjects.find(x => x.id === cur.sid), out = $('simOut'); if (!s || cur.term == null || !out) return;
+  const c = s.cs[cur.term], gt = $('sg').value.trim(), wt = $('sw').value.trim(), nom = $('sn').value.trim();
+  const msg = (cl, h) => { out.innerHTML = `<p class="msg ${cl}">${h}</p>`; };
+  if (c.over) return msg('warn', 'Les ponderacions reals passen del 100%. Corregeix-les abans de simular.');
+  if (c.pend < 0.0001) return msg('', 'Aquest trimestre ja està avaluat al 100%: no hi cap cap examen més.');
+  if (gt === '' || wt === '') return msg('', 'Escriu la nota i el pes per veure el resultat.');
+  const g = num(gt), w = num(wt);
+  if (isNaN(g) || g < 0 || g > 10) return msg('warn', 'La nota ha de ser un número entre 0 i 10.');
+  if (isNaN(w) || w <= 0) return msg('warn', 'El pes ha de ser un número més gran que 0.');
+  if (w > c.pend + 0.0001) return msg('warn', `Aquest pes faria superar el 100%. Com a màxim pots posar un ${pf(c.pend)}% (el que queda pendent).`);
+  const pts = c.pts + g * w / 100, ev = c.ev + w, pend = 100 - ev, avg = pts / (ev / 100), fin = pts + avg * pend / 100;
+  const k = (l, v, ab) => `<div class="st" style="--c:${s.c}"><div class="lbl">${l}</div><div class="num" style="font-size:26px">${v}</div><small style="color:var(--ink2)">abans: ${ab}</small></div>`;
+  out.innerHTML = `<div class="g2" style="margin-bottom:0">${k('Nous punts acumulats', fx(pts) + '/10', fx(c.pts) + '/10')}${k('Nova mitjana', fx(avg), fx(c.avg))}${k('Nou % avaluat', pf(ev) + '%', pf(c.ev) + '%')}${k('Nou % pendent', pf(Math.max(pend, 0)) + '%', pf(c.pend) + '%')}</div>
+    <div class="st" style="--c:${COLORS[3]};margin-top:12px"><div class="lbl">Nota final projectada${nom ? ' amb «' + esc(nom) + '»' : ''}</div><div class="num">${fx(fin)}</div>
+    <p class="msg" style="margin-top:6px">${pend > 0.0001 ? `Estimació: ${fx(pts)} punts acumulats + ${fx(avg)} (la nova mitjana) × ${pf(pend)}% pendent = ${fx(fin)}. Suposa que mantens la mitjana en el que queda; no és una nota garantida.`
+      : `Amb aquest examen el trimestre quedaria avaluat al 100%: aquesta seria la nota final (${fx(pts)}).`}</p></div>`;
+}
+function goalH(s, i) {
+  const chips = [5, 6, 7, 8, 9, 10].map(v => `<button class="chip ${simGoal === v ? 'on' : ''}" data-goal="${v}">${v}</button>`).join('');
+  return `<p class="msg" style="margin-top:0">Escriu la nota final que vols treure al trimestre (entre 5 i 10, també amb decimals) o tria’n una de ràpida.</p>
+    <div class="f"><label>Nota objectiu (5 - 10)</label><input id="gt" inputmode="decimal" autocomplete="off" placeholder="Per exemple: 7,5" value="${simGoal == null ? '' : String(simGoal).replace('.', ',')}"></div>
+    <div class="chips" style="margin:12px 0 4px">${chips}</div>
+    <div id="goalOut">${simGoal == null ? '<p class="msg">Escriu una nota objectiu per veure què necessites.</p>' : goalRes(s.cs[i], simGoal)}</div>`;
+}
+function goalCalc() {
+  const s = subjects.find(x => x.id === cur.sid), out = $('goalOut'); if (!s || cur.term == null || !out) return;
+  const raw = $('gt').value.trim(), msg = (cl, h) => { out.innerHTML = `<p class="msg ${cl}">${h}</p>`; }, chips = document.querySelectorAll('#goalBox .chip');
+  simGoal = null; chips.forEach(b => b.classList.remove('on'));
+  if (raw === '') return msg('', 'Escriu una nota objectiu per veure què necessites.');
+  const t = /^\d+([.,]\d+)?$/.test(raw) ? num(raw) : NaN;
+  if (isNaN(t) || t < 5 || t > 10) return msg('warn', 'L’objectiu ha de ser un número entre 5 i 10 (pots escriure decimals amb coma o punt).');
+  simGoal = t; chips.forEach(b => b.classList.toggle('on', +b.dataset.goal === t));
+  out.innerHTML = goalRes(s.cs[cur.term], t);
+}
+function goalRes(c, t) {
+  const box = (col, big, txt, bar) => `<div class="st" style="--c:${col};margin-top:12px">${big ? `<div class="lbl">Mitjana necessària al pendent</div><div class="num">${big}</div>` : ''}${bar || ''}<p class="msg" style="margin-top:8px">${txt}</p></div>`;
+  if (c.over) return `<p class="msg warn">Les ponderacions reals passen del 100%. Corregeix-les per fer el càlcul.</p>`;
+  if (c.pend < 0.0001) return box(COLORS[0], '', `Ja has avaluat el 100% del trimestre: no queden percentatges pendents. La teva nota final és ${fx(c.pts)}, així que ${c.pts >= t - 0.0001 ? 'arribes' : 'no arribes'} al ${fx(t)}.`);
+  const need = (t - c.pts) / (c.pend / 100);
+  if (need <= 0.0001) return box(COLORS[3], '0', `Ja ho tens! Amb els ${fx(c.pts)} punts acumulats arribes al ${fx(t)} encara que traguessis un 0 en el ${pf(c.pend)}% que queda pendent.`);
+  if (need > 10.0001) return box('#f58c8c', '✖', `Impossible: amb un 10 a tot el ${pf(c.pend)}% pendent, el màxim que pots treure és ${fx(c.pts + 10 * c.pend / 100)}, per sota del ${fx(t)}.`);
+  const nd = Math.ceil(need * 100 - 1e-6) / 100;
+  const cmp = c.avg == null ? '' : nd <= c.avg + 0.0001 ? ` La teva mitjana actual als exàmens fets és ${fx(c.avg)}: si la mantens, ho aconsegueixes.` : ` La teva mitjana actual als exàmens fets és ${fx(c.avg)}: hauràs de pujar el nivell.`;
+  return box(COLORS[3], fx(nd), `Possible: portes ${fx(c.pts)} punts acumulats (això no és la mitjana) i et falta avaluar el ${pf(c.pend)}%. Per arribar al ${fx(t)} necessites una mitjana de ${fx(nd)} en aquests exàmens pendents.${cmp}`,
+    `<div class="trk" style="margin:10px 0 0"><i style="width:${nd * 10}%;background:var(--ink)"></i></div>`);
+}
+document.addEventListener('input', e => { if (['sn', 'sg', 'sw'].includes(e.target.id)) simCalc(); else if (e.target.id === 'gt') goalCalc(); });
+
+function renderSub(s) {
+  const g = gen(s);
+  return `<button class="link" data-back="1">‹ Assignatures</button>
+    <div class="subject hero" style="--c:${s.c}"><div class="emoji">${s.e}</div><div class="sname">${esc(s.n)}<small>${g == null ? 'Encara sense notes' : 'Nota actual'}</small></div>
+    <div class="grade">${fmt(g)}</div>${ring(s.c, (g || 0) / 10)}</div>
+    <h2>Trimestres</h2><div class="grid">${s.cs.map((c, i) => `<div class="subject" data-term="${i}" style="--c:${s.c}"><div class="emoji sm">${i + 1}</div>
+      <div class="sname">${TN[i]}<small>${c.over ? 'Ponderacions per sobre del 100%' : pf(c.ev) + '% avaluat · ' + pf(c.pend) + '% pendent'}</small><div class="bar"><i style="width:${Math.min(c.ev, 100)}%"></i></div></div>
+      <div class="grade">${fmt(c.avg)}</div><div class="chev">›</div></div>`).join('')}</div>`;
+}
+function renderTerm(s, i) {
+  const c = s.cs[i], ex = s.ex.filter(e => e.term === i + 1);
+  const st = (l, v) => `<div class="st" style="--c:${s.c}"><div class="lbl">${l}</div><div class="num" style="font-size:30px">${v}</div></div>`;
+  const nota = c.over ? '' : c.pend > 0.0001 && ex.length ? `<p class="msg">Encara hi ha un ${pf(c.pend)}% pendent: els punts acumulats no són la nota final del trimestre.</p>`
+    : c.ev >= 99.999 ? `<p class="msg ok">Avaluació completada: la nota final del trimestre és ${fx(c.pts)}.</p>` : '';
+  return `<button class="link" data-back="1">‹ ${esc(s.n)}</button><h2 style="margin-top:6px">${s.e} ${esc(s.n)} · ${TN[i]}</h2>
+    ${c.over ? `<p class="msg warn">Les ponderacions sumen ${pf(c.tw)}%, més del 100%. Corregeix-les per veure els càlculs.</p>` : ''}
+    <div class="g2">${st('Punts acumulats', c.over ? '—' : fx(c.pts) + '/10')}${st('Mitjana dels exàmens fets', fx(c.avg))}${st('Avaluat', c.over ? '—' : pf(c.ev) + '%')}${st('Pendent', c.over ? '—' : pf(c.pend) + '%')}</div>${nota}
+    <h2>Exàmens</h2>${ex.length ? `<div class="grid">${ex.map(e => `<div class="subject set" style="--c:${s.c}"><div class="sname">${esc(e.name)}<small>${e.exam_date ? fd(e.exam_date) + ' · ' : ''}${pf(e.weight)}%</small></div>
+      <div class="grade" style="font-size:${e.grade == null ? 17 : 26}px">${e.grade == null ? 'Pendent' : fx(e.grade)}</div>
+      <button class="ic" data-eed="${e.id}" aria-label="Editar">✏️</button><button class="ic" data-edel="${e.id}" aria-label="Eliminar">🗑️</button></div>`).join('')}</div>`
+      : buit('📝', 'Encara no hi ha cap examen en aquest trimestre.')}
+    <button class="btn" data-eadd="${i + 1}">＋ Afegir examen</button>
+    <h2>Simuladors</h2>
+    <button type="button" class="rowbtn" id="simToggle" data-simtoggle="1" aria-expanded="${simOpen}" aria-controls="simPanel"><span>🧮</span>Nota suposada<span class="chev">›</span></button>
+    <div class="box" id="simPanel" ${simOpen ? '' : 'hidden'}>${simH(s, i)}</div>
+    <button type="button" class="rowbtn" id="goalToggle" data-goaltoggle="1" aria-expanded="${goalOpen}" aria-controls="goalPanel"><span>🎯</span>Quina nota necessito?<span class="chev">›</span></button>
+    <div class="box" id="goalPanel" ${goalOpen ? '' : 'hidden'}><div id="goalBox">${goalH(s, i)}</div></div>`;
+}
+
+function renderRank() {
+  const el = $('rank'); if (gate(el)) return;
+  if (!subjects.length) { el.innerHTML = buit('🏆', 'Crea assignatures i afegeix-hi exàmens amb nota: aquí veuràs la classificació de millor a pitjor.'); return; }
+  const g = rankK === 'g', k = g ? null : +rankK;
+  const chips = [['g', 'General'], ['0', '1r trimestre'], ['1', '2n trimestre'], ['2', '3r trimestre']];
+  // Només compten els exàmens amb nota (els pendents queden fora); sense notes no és un 0
+  const ok = subjects.filter(s => val(s, rankK) != null).sort((a, b) => val(b, rankK) - val(a, rankK) || a.n.localeCompare(b.n, 'ca'));
+  const no = subjects.filter(s => val(s, rankK) == null);
+  const pos = ok.map((s, i) => i > 0 && Math.abs(val(s, rankK) - val(ok[i - 1], rankK)) < 0.005 ? null : i + 1);
+  for (let i = 1; i < pos.length; i++) if (pos[i] == null) pos[i] = pos[i - 1];   // empat = mateixa posició
+  const nEx = n => n + (n === 1 ? ' examen' : ' exàmens');
+  const over = s => g ? s.cs.some(c => c.over) : s.cs[k].over;
+  const detail = s => g ? s.cs.map((c, i) => `${i + 1}${i === 1 ? 'n' : 'r'} ${c.over ? '⚠️' : fx(c.avg)}`).join(' · ') : pf(s.cs[k].ev) + '% avaluat';
+  const row = (s, p) => `<div class="rk ${p ? '' : 'no'}" style="--c:${s.c}"><div class="pos">${p ? (['🥇', '🥈', '🥉'][p - 1] || p) : '·'}</div>
+    <div class="emoji sm">${s.e}</div><div class="sname">${esc(s.n)}
+    <div class="bar"><i style="width:${(val(s, rankK) || 0) * 10}%"></i></div></div>
+    <div class="gr"><div class="grade sm">${fx(val(s, rankK))}</div><small>${nEx(g ? s.x : s.cs[k].n)}</small></div><div class="ts">${p ? detail(s) : over(s) ? '⚠️ Ponderacions per sobre del 100%: corregeix-les' : g ? 'Encara sense cap examen amb nota' : 'Sense cap examen amb nota en aquest trimestre'}</div></div>`;
+  const info = g ? 'Nota general = mitjana dels trimestres que ja tenen notes. Els exàmens pendents no compten.' : `Mitjana dels exàmens fets al ${TN[k]}. Els exàmens pendents no compten.`;
+  el.innerHTML = `<div class="chips">${chips.map(c => `<button class="chip ${c[0] === rankK ? 'on' : ''}" data-k="${c[0]}">${c[1]}</button>`).join('')}</div>
+    <div class="rankwrap">${ok.length ? `<p class="rkinfo">${info}</p>${ok.map((s, i) => row(s, pos[i])).join('')}
+      ${no.length ? '<p class="rkinfo" style="margin-top:22px">Sense notes encara (no compten com a suspeses)</p>' + no.map(s => row(s, 0)).join('') : ''}`
+      : buit('🏆', g ? 'Encara no hi ha cap examen amb nota. Quan n’afegeixis, el rànquing apareixerà aquí.' : `Cap assignatura té notes al ${TN[k]} encara.`)}</div>`;
+}
+
+function renderStats() {
+  const el = $('stats'); if (gate(el)) return;
+  const gs = subjects.filter(s => gen(s) != null);
+  if (!gs.length) { el.innerHTML = buit('📊', subjects.length ? 'Encara no hi ha cap examen amb nota. Entra en una assignatura, afegeix un examen i posa-hi la nota: aquí apareixeran les teves estadístiques.' : 'Crea una assignatura a Ajustos i afegeix-hi exàmens amb nota. Les estadístiques es calculen només amb les teves dades reals.'); return; }
+  const tm = [0, 1, 2].map(i => mean(subjects.map(s => s.t[i]))), over = mean(gs.map(gen));
+  const comp = subjects.reduce((a, s) => a + s.cs.reduce((b, c) => b + (c.over ? 0 : c.ev), 0), 0) / (3 * subjects.length);
+  const exams = subjects.reduce((a, s) => a + s.x, 0);
+  const sorted = [...gs].sort((a, b) => gen(b) - gen(a)), best = sorted[0], worst = sorted[sorted.length - 1];
+  const apr = gs.filter(s => gen(s) >= 5).length, sense = subjects.length - gs.length;
+  const evo = gs.map(s => { const v = s.t.filter(x => x != null); return { s, f: v[0], d: v.length > 1 ? v[v.length - 1] - v[0] : null }; }).filter(o => o.d != null && o.f > 0).sort((a, b) => b.d / b.f - a.d / a.f);
+  const W = innerWidth < 600 ? 400 : 600, X = W === 400 ? [60, 200, 340] : [70, 300, 530], Y = v => 190 - v * 17, pts = vals => vals.map((v, i) => v == null ? null : X[i] + ',' + Y(v)).filter(Boolean);
+  const lines = gs.map(s => { const last = s.t.reduce((a, v, i) => v == null ? a : i, 0);
+    return `<polyline points="${pts(s.t).join(' ')}" fill="none" stroke="${s.c}" stroke-width="3" stroke-linejoin="round"/>` +
+      s.t.map((v, i) => v == null ? '' : `<circle cx="${X[i]}" cy="${Y(v)}" r="5" fill="${s.c}"/>`).join('') +
+      `<text x="${X[last] + 11}" y="${Y(s.t[last]) + 5}" font-size="15">${s.e}</text>`; }).join('');
+  const gl = `<polyline points="${pts(tm).join(' ')}" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
+    tm.map((v, i) => v == null ? '' : `<circle cx="${X[i]}" cy="${Y(v)}" r="8" style="fill:var(--bg)" stroke="currentColor" stroke-width="4"/>`).join('');
+  const grid = [0, 5, 10].map(v => `<line x1="30" x2="${W - 30}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity="${v === 5 ? .5 : .15}" ${v === 5 ? 'stroke-dasharray="6 6"' : ''}/><text x="4" y="${Y(v) + 5}" font-size="13" style="fill:var(--muted)">${v}</text>`).join('');
+  const xl = ['1r', '2n', '3r'].map((t, i) => `<text x="${X[i]}" y="216" text-anchor="middle" font-size="14" style="fill:var(--muted)">${t} trimestre${tm[i] == null ? '' : ' · <tspan font-weight="800" fill="currentColor">' + fmt(tm[i]) + '</tspan>'}</text>`).join('');
+  const c = (col, l, t) => `<div class="st" style="--c:${col}"><div class="lbl">${l}</div><p>${t}</p></div>`;
+  const rows = sorted.map(s => { const g = gen(s), ev = mean(s.cs.map(x => x.over ? 0 : x.ev));
+    return `<div class="lp" style="--c:${s.c}"><div class="emoji sm">${s.e}</div><div class="lpm"><div class="lpn">${esc(s.n)}<small>${pf(ev)}% avaluat</small></div><div class="trk"><i style="width:${g * 10}%"></i><u></u></div></div><b>${fmt(g)}</b></div>`; }).join('');
+  el.innerHTML = `<div class="grid">
+    <div class="st span hero2" style="--c:${COLORS[0]}"><svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" style="stroke:var(--track)" stroke-width="12"/>
+      <circle cx="66" cy="66" r="56" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(over / 10 * 351.9).toFixed(1)} 351.9" transform="rotate(-90 66 66)"/>
+      <text x="66" y="76" text-anchor="middle" font-size="34" font-weight="800" fill="currentColor">${fmt(over)}</text></svg>
+      <div><div class="lbl">Mitjana general</div><p>Avaluació completada: ${pf(comp)}%<br><span style="color:var(--ink2);font-weight:500">Pendent: ${pf(100 - comp)}% · ${exams} exàmens fets</span></p>
+      <div class="bar" style="height:12px"><i style="width:${comp}%;background:var(--ink)"></i></div></div></div>
+    <div class="st span" style="--c:${COLORS[6]}"><div class="lbl">Evolució per trimestres (línia gruixuda = mitjana general)</div>
+      <svg class="chart" viewBox="0 0 ${W} 224">${grid}${lines}${gl}${xl}</svg>
+      ${tm.filter(v => v != null).length < 2 ? '<p class="msg">Amb notes en un sol trimestre encara no es pot veure l’evolució.</p>' : ''}</div>
+    <div class="st span" style="--c:${COLORS[2]}"><div class="lbl">Rendiment per assignatura (la ratlla vertical marca el 5)</div>${rows}
+      ${sense ? `<p class="msg">${sense} assignatura${sense > 1 ? 's' : ''} sense notes encara no es compte${sense > 1 ? 'n' : ''}.</p>` : ''}</div></div>
+    <div class="g2">${c(COLORS[3], '🥇 Millor resultat', `${esc(best.n)}<br>${fmt(gen(best))}`)}
+      ${gs.length > 1 ? c(COLORS[4], '🎯 A millorar', `${esc(worst.n)}<br>${fmt(gen(worst))}`) : ''}
+      ${c(COLORS[5], '✅ Aprovades', `${apr} de ${gs.length} (${Math.round(apr / gs.length * 100)}%)`)}
+      ${evo.length && evo[0].d > 0 ? c(COLORS[1], '🚀 Millor evolució', `${esc(evo[0].s.n)}<br>+${Math.round(evo[0].d / evo[0].f * 100)}%`) : ''}
+      ${evo.length && evo[evo.length - 1].d < 0 ? c(COLORS[4], '📉 Per vigilar', `${esc(evo[evo.length - 1].s.n)}<br>${Math.round(evo[evo.length - 1].d / evo[evo.length - 1].f * 100)}%`) : ''}</div>`;
+}
+
+function renderAjust() {
+  const el = $('ajust');
+  if (!user || dataErr) { el.innerHTML = themeH() + (!user ? gateH() : buit('⚠️', 'No s’han pogut carregar les dades: ' + esc(dataErr))); return; }
+  el.innerHTML = TAG + '<h2>Les meves assignatures</h2>' +
+    (subjects.length ? `<div class="grid">${subjects.map(s => `<div class="subject set" style="--c:${s.c}"><div class="emoji">${s.e}</div>
+      <div class="sname">${esc(s.n)}</div><button class="ic" data-ed="${s.id}" aria-label="Editar">✏️</button>
+      <button class="ic" data-del="${s.id}" aria-label="Eliminar">🗑️</button></div>`).join('')}</div>` : buit('📚', 'Encara no tens cap assignatura.')) +
+    '<button class="btn" id="btnAdd">＋ Afegir assignatura</button>' +
+    themeH() + backupH();
+}
+
+// ---- Finestres (afegir, editar, eliminar) ----
+const openModal = h => { $('sheet').innerHTML = h; $('modal').classList.add('on'); };
+const closeModal = () => $('modal').classList.remove('on');
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+// Un sol emoji Unicode (també compostos: 👨‍💻, 🏳️‍🌈, 🇪🇸, 1️⃣). Buit = 📘 per defecte.
+function parseEmoji(v) {
+  v = v.trim(); if (!v) return { v: '📘' };
+  const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v)].map(x => x.segment) : (v.length <= 16 ? [v] : [v, v]);
+  const rx = /\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3/u;
+  if (!rx.test(v)) return { err: 'Això no és un emoji. Prova d’enganxar-ne un.' };
+  if (seg.length > 1) return { err: 'Escriu només un emoji.' };
+  return { v: seg[0] };
+}
+function updPrev() {
+  const p = $('fprev'); if (!p) return;
+  const e = parseEmoji($('fe').value);
+  p.textContent = e.v || '❔'; p.parentNode.style.setProperty('--c', draft.c);
+  $('fprevn').textContent = $('fn').value.trim() || 'Nom de l’assignatura';
+}
+document.addEventListener('input', e => {
+  if (e.target.id === 'fc') {   // color lliure
+    draft.c = e.target.value; $('fch').textContent = draft.c; $('fcl').classList.add('on');
+    document.querySelectorAll('.sw button').forEach(b => b.classList.remove('on')); updPrev();
+  } else if (e.target.id === 'fe' || e.target.id === 'fn') updPrev();
+});
+// ---- Aparença (mode fosc / clar) ----
+const curTheme = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+function applyTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem('notes_theme', t); } catch (e) {} }
+async function setTheme(t) {
+  applyTheme(t);
+  if (sb && user) {
+    const r = await sb.from('user_settings').upsert({ user_id: user.id, theme: t }, { onConflict: 'user_id' });
+    if (r.error) say('warn', 'El tema s’ha aplicat aquí, però no s’ha pogut sincronitzar: ' + esc(r.error.message), 'io');
+  }
+  renderAll();
+}
+async function loadSettings() {
+  const r = await sb.from('user_settings').select('theme').eq('user_id', user.id).maybeSingle();
+  if (r.error) return;
+  if (r.data && (r.data.theme === 'dark' || r.data.theme === 'light')) applyTheme(r.data.theme);
+  else await sb.from('user_settings').upsert({ user_id: user.id, theme: curTheme() }, { onConflict: 'user_id' });
+}
+const themeH = () => `<h2>Aparença</h2><div class="box"><b>🌗 Mode fosc o clar</b>
+  <p class="msg" style="color:var(--muted)">S’aplica a tota l’aplicació i es recorda en tornar-hi${user ? ' (també als teus altres dispositius)' : ''}.</p>
+  <div class="chips" style="margin:12px 0 0"><button class="chip ${curTheme() === 'dark' ? 'on' : ''}" data-theme="dark">🌙 Fosc</button><button class="chip ${curTheme() === 'light' ? 'on' : ''}" data-theme="light">☀️ Clar</button></div></div>`;
+
+// ---- Còpia de seguretat: exportar i importar (JSON) ----
+const backupH = () => `<h2>Còpia de seguretat</h2><div class="box"><b>💾 Exportar</b>
+  <p class="msg" style="color:var(--muted)">Descarrega un fitxer JSON amb les teves assignatures, colors, emojis, exàmens, notes, ponderacions, dates i preferències. No inclou la contrasenya ni cap dada d’accés.</p>
+  <button class="btn soft" data-exp="1">Descarregar la còpia (JSON)</button>
+  <div style="height:22px"></div><b>📥 Importar</b>
+  <p class="msg" style="color:var(--muted)">Tria un fitxer exportat per aquesta aplicació. Abans de canviar res et mostrarem què se substituirà i et demanarem confirmació.</p>
+  <button class="btn soft" data-imp="1">Triar un fitxer…</button><input type="file" id="impFile" accept="application/json,.json" hidden>
+  <div id="amsg_io">${msgH('io')}</div></div>`;
+function buildExport() {
+  return { app: 'notes-batxillerat', version: 1, exportedAt: new Date().toISOString(), preferences: { theme: curTheme() },
+    subjects: subjects.map((s, i) => ({ id: s.id, name: s.n, emoji: s.e, color: s.c, position: i })),
+    exams: subjects.flatMap(s => s.ex.map(e => ({ id: e.id, subject_id: s.id, term: e.term, name: e.name, grade: e.grade, weight: e.weight, exam_date: e.exam_date || null }))) };
+}
+const expName = () => 'notes-batxillerat-' + new Date().toISOString().slice(0, 10) + '.json';
+function downloadJSON(obj, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+function validateBackup(d) {
+  const bad = m => ({ err: m });
+  if (!d || typeof d !== 'object' || d.app !== 'notes-batxillerat') return bad('Aquest fitxer no és una còpia d’aquesta aplicació.');
+  if (d.version !== 1) return bad('La versió de la còpia no és compatible.');
+  if (!Array.isArray(d.subjects) || !Array.isArray(d.exams)) return bad('Falten les llistes d’assignatures o d’exàmens.');
+  if (d.subjects.length > 200 || d.exams.length > 5000) return bad('La còpia és massa gran.');
+  const ids = new Set(), subs = [], exs = [], sum = {};
+  for (const [i, s] of d.subjects.entries()) {
+    if (!s || typeof s !== 'object' || 'user_id' in s) return bad(`Assignatura ${i + 1}: format no vàlid (o conté dades d’un usuari).`);
+    if (typeof s.id !== 'string' || !s.id || ids.has(s.id)) return bad(`Assignatura ${i + 1}: identificador absent o repetit.`);
+    if (typeof s.name !== 'string' || !s.name.trim() || s.name.length > 60) return bad(`Assignatura ${i + 1}: nom no vàlid.`);
+    const em = parseEmoji(typeof s.emoji === 'string' ? s.emoji : ''); if (em.err) return bad(`Assignatura «${esc(s.name)}»: emoji no vàlid.`);
+    if (typeof s.color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(s.color)) return bad(`Assignatura «${esc(s.name)}»: color no vàlid.`);
+    ids.add(s.id); subs.push({ oldId: s.id, name: s.name.trim(), emoji: em.v, color: s.color.toLowerCase(), position: i });
+  }
+  for (const [i, e] of d.exams.entries()) {
+    const n = `Examen ${i + 1}`;
+    if (!e || typeof e !== 'object' || 'user_id' in e) return bad(`${n}: format no vàlid (o conté dades d’un usuari).`);
+    if (!ids.has(e.subject_id)) return bad(`${n}: l’assignatura no existeix al fitxer.`);
+    if (![1, 2, 3].includes(e.term)) return bad(`${n}: el trimestre ha de ser 1, 2 o 3.`);
+    if (typeof e.name !== 'string' || !e.name.trim() || e.name.length > 80) return bad(`${n}: nom no vàlid.`);
+    if (e.grade !== null && !(typeof e.grade === 'number' && isFinite(e.grade) && e.grade >= 0 && e.grade <= 10)) return bad(`${n}: la nota ha de ser buida o entre 0 i 10.`);
+    if (!(typeof e.weight === 'number' && isFinite(e.weight) && e.weight > 0 && e.weight <= 100)) return bad(`${n}: el percentatge ha de ser entre 0 i 100.`);
+    if (e.exam_date != null && !(typeof e.exam_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.exam_date) && !isNaN(new Date(e.exam_date + 'T00:00')))) return bad(`${n}: data no vàlida.`);
+    const k = e.subject_id + '|' + e.term; sum[k] = (sum[k] || 0) + e.weight;
+    if (sum[k] > 100.0001) return bad(`${n}: les ponderacions d’un trimestre sumen més del 100%.`);
+    exs.push({ oldSid: e.subject_id, term: e.term, name: e.name.trim(), grade: e.grade, weight: e.weight, exam_date: e.exam_date || null });
+  }
+  const th = d.preferences && (d.preferences.theme === 'light' || d.preferences.theme === 'dark') ? d.preferences.theme : null;
+  return { subs, exs, theme: th, when: typeof d.exportedAt === 'string' ? d.exportedAt.slice(0, 10) : null };
+}
+let pendingImp = null;
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'impFile') return;
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (f.size > 5e6) return say('warn', 'El fitxer és massa gran (màxim 5 MB).', 'io');
+  let d; try { d = JSON.parse(await f.text()); } catch (x) { return say('warn', 'El fitxer no és un JSON vàlid.', 'io'); }
+  const v = validateBackup(d); if (v.err) return say('warn', 'No es pot importar: ' + v.err, 'io');
+  pendingImp = v; const nEx = subjects.reduce((a, s) => a + s.ex.length, 0);
+  openModal(`<h2>Importar còpia de seguretat</h2>
+    <p style="line-height:1.5">El fitxer conté <b>${v.subs.length}</b> assignatures i <b>${v.exs.length}</b> exàmens${v.when ? ' (exportat el ' + v.when + ')' : ''}.</p>
+    <p class="msg warn"><b>⚠️ Se substituiran les teves dades actuals:</b> ${subjects.length ? `s’eliminaran les teves <b>${subjects.length}</b> assignatures i <b>${nEx}</b> exàmens, i es reemplaçaran per les del fitxer.` : 'ara no tens cap assignatura, així que no se’n substituirà cap.'}${v.theme ? ' També s’aplicarà el mode ' + (v.theme === 'light' ? 'clar' : 'fosc') + ' del fitxer.' : ''}</p>
+    <label class="chk"><input type="checkbox" id="impBk" ${subjects.length ? 'checked' : 'disabled'}> Descarrega primer una còpia de les meves dades actuals</label>
+    <div class="err" id="ferr"></div><button class="btn danger" id="impOk">Sí, substituir les meves dades</button><button class="btn soft" id="fno">Cancel·lar</button>`);
+});
+async function doImport(btn) {
+  const P = pendingImp; if (!P || !sb || !user) return;
+  const er = m => { $('ferr').textContent = m; btn.disabled = false; };
+  btn.disabled = true;
+  try {
+    if ($('impBk').checked && subjects.length) downloadJSON(buildExport(), 'copia-abans-de-importar-' + expName());
+    const idMap = {}, news = P.subs.map(s => { const id = uuid(); idMap[s.oldId] = id; return { id, name: s.name, emoji: s.emoji, color: s.color, position: s.position }; });
+    const undo = async () => { if (news.length) await sb.from('subjects').delete().in('id', news.map(s => s.id)); };   // l'esborrat en cascada elimina els seus exàmens
+    // 1) s'afegeix el contingut nou; si falla, no s'ha tocat res de l'existent
+    if (news.length) { const r = await sb.from('subjects').insert(news); if (r.error) return er('No s’ha pogut importar. Les teves dades no s’han tocat. (' + r.error.message + ')'); }
+    const rows = P.exs.map(e => ({ subject_id: idMap[e.oldSid], term: e.term, name: e.name, grade: e.grade, weight: e.weight, exam_date: e.exam_date }));
+    for (let i = 0; i < rows.length; i += 500) {
+      const r = await sb.from('exams').insert(rows.slice(i, i + 500));
+      if (r.error) { await undo(); return er('No s’han pogut importar els exàmens. S’ha desfet la importació i les teves dades continuen intactes. (' + r.error.message + ')'); }
+    }
+    // 2) només aleshores s'eliminen les assignatures anteriors (i, en cascada, els seus exàmens)
+    const all = await sb.from('subjects').select('id'), keep = new Set(news.map(s => s.id));
+    const old = (all.data || []).map(x => x.id).filter(id => !keep.has(id));
+    if (old.length) {
+      const r = await sb.from('subjects').delete().in('id', old);
+      if (r.error) { await loadData(); closeModal(); renderAll(); return say('warn', 'Les dades noves s’han importat, però no s’han pogut eliminar les antigues (' + esc(r.error.message) + '). Ara tens les dues versions; pots eliminar les antigues des d’aquí.', 'io'); }
+    }
+    if (P.theme) await setTheme(P.theme);
+    pendingImp = null; await loadData(); closeModal(); amsg = { t: 'ok', h: `Còpia importada: ${P.subs.length} assignatures i ${P.exs.length} exàmens.`, f: 'io' }; renderAll();
+  } catch (x) { er('Error inesperat: ' + x.message); }
+}
+
+// ---- Selector complet d'emojis (biblioteca emoji-picker-element) ----
+const EMOJI_I18N = { categoriesLabel: 'Categories', emojiUnsupportedMessage: 'El teu navegador no admet emojis en color.', favoritesLabel: 'Preferits', loadingMessage: 'Carregant…', networkErrorMessage: 'No s’han pogut carregar els emojis.', regionLabel: 'Selector d’emojis',
+  searchDescription: 'Quan hi hagi resultats, prem amunt o avall per triar i intro per seleccionar.', searchLabel: 'Cerca', searchResultsLabel: 'Resultats de la cerca',
+  skinToneDescription: 'Quan estigui desplegat, prem amunt o avall per triar i intro per seleccionar.', skinToneLabel: 'Tria un to de pell (ara: {skinTone})', skinTonesLabel: 'Tons de pell',
+  skinTones: ['Per defecte', 'Clar', 'Mig clar', 'Mig', 'Mig fosc', 'Fosc'],
+  categories: { custom: 'Personalitzats', 'smileys-emotion': 'Cares i emocions', 'people-body': 'Persones i cos', 'animals-nature': 'Animals i natura', 'food-drink': 'Menjar i beure', 'travel-places': 'Viatges i llocs', activities: 'Activitats', objects: 'Objectes', symbols: 'Símbols', flags: 'Banderes' } };
+function openEmojiPicker() {
+  const ov = document.createElement('div'); ov.className = 'modal on'; ov.id = 'modalEmoji'; ov.style.zIndex = 30;
+  ov.innerHTML = '<div class="sheet"><h2>Tria un emoji</h2><div id="epBox"></div><button class="btn soft" data-epclose="1">Tancar</button></div>';
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  const box = ov.querySelector('#epBox');
+  if (!window.customElements || !customElements.get('emoji-picker')) { box.innerHTML = '<p class="msg warn">No s’ha pogut carregar el selector d’emojis (cal connexió a internet). Pots escriure o enganxar l’emoji al camp.</p>'; return; }
+  const pk = document.createElement('emoji-picker'); pk.className = curTheme();
+  pk.i18n = EMOJI_I18N; pk.locale = 'es'; pk.dataSource = 'https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/es/emojibase/data.json';
+  pk.addEventListener('emoji-click', ev => { $('fe').value = ev.detail.unicode; updPrev(); ov.remove(); });
+  box.appendChild(pk);
+}
+
+function openForm(id) {
+  const s = subjects.find(x => x.id === id);
+  draft = s ? { ...s } : { id: null, n: '', e: '📘', c: COLORS[0], t: [null, null, null], x: 0 };
+  openModal(`<h2>${s ? 'Editar' : 'Afegir'} assignatura</h2>
+    <div class="prevrow" style="--c:${draft.c}"><div class="emoji" id="fprev">${esc(draft.e)}</div><div class="sname" id="fprevn" style="font-size:19px">${esc(draft.n) || 'Nom de l’assignatura'}</div></div>
+    <label>Nom</label><input id="fn" maxlength="30" value="${esc(draft.n)}" placeholder="Per exemple: Biologia">
+    <label>Emoji (escriu-ne o enganxa’n qualsevol)</label><input id="fe" value="${esc(draft.e)}" placeholder="📘" autocomplete="off">
+    <div class="qe" style="margin-top:10px">${['📘','🧮','📖','🔬','🌍','🎨','🎵','💻','⚖️','🏃'].map(e => `<button data-qe="${e}">${e}</button>`).join('')}<button data-qemore="1" class="qmore" aria-label="Més emojis" title="Més emojis">+</button></div>
+    <label>Color</label><div class="sw">${COLORS.map(c => `<button data-sw="${c}" class="${c === draft.c ? 'on' : ''}" style="background:${c}"></button>`).join('')}</div>
+    <label class="cpick ${COLORS.includes(draft.c) ? '' : 'on'}" id="fcl"><input type="color" id="fc" value="${draft.c}"><span>Triar qualsevol color</span><b id="fch">${draft.c}</b></label>
+    <p class="msg" style="margin-top:8px;color:var(--muted);font-size:13px">Els colors molt foscos es veuen poc sobre el fons fosc.</p>
+    <div class="err" id="ferr"></div>
+    <button class="btn" id="fok">Desar</button><button class="btn soft" id="fno">Cancel·lar</button>`);
+}
+function openDel(id) {
+  const s = subjects.find(x => x.id === id);
+  openModal(`<h2>Eliminar assignatura</h2><p style="line-height:1.5">Segur que vols eliminar <b>${esc(s.n)}</b>? També s’esborraran els seus exàmens i notes.</p>
+    <button class="btn danger" data-delok="${id}">Sí, eliminar</button><button class="btn soft" id="fno">Cancel·lar</button>`);
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.id === 'btnAdd' || t.dataset.add) openForm(null);
+  else if (t.dataset.theme) await setTheme(t.dataset.theme);
+  else if (t.dataset.exp) { downloadJSON(buildExport(), expName()); say('ok', `Còpia descarregada: ${subjects.length} assignatures i ${subjects.reduce((a, x) => a + x.ex.length, 0)} exàmens.`, 'io'); }
+  else if (t.dataset.imp) $('impFile').click();
+  else if (t.id === 'impOk') await doImport(t);
+  else if (t.dataset.qemore) openEmojiPicker();
+  else if (t.dataset.epclose) $('modalEmoji').remove();
+  else if (t.dataset.k != null) { rankK = t.dataset.k; renderRank(); }
+  else if (t.dataset.ed) openForm(t.dataset.ed);
+  else if (t.dataset.del) openDel(t.dataset.del);
+  else if (t.dataset.delok) {
+    t.disabled = true; const r = await sb.from('subjects').delete().eq('id', t.dataset.delok);
+    if (r.error) { t.disabled = false; alert('No s’ha pogut eliminar: ' + r.error.message); return; }
+    if (cur.sid === t.dataset.delok) cur = { sid: null, term: null };
+    await loadData(); closeModal(); renderAll();
+  }
+  else if (t.id === 'fno') closeModal();
+  else if (t.dataset.qe) { $('fe').value = t.dataset.qe; updPrev(); }
+  else if (t.dataset.sw) { draft.c = t.dataset.sw; document.querySelectorAll('.sw button').forEach(b => b.classList.toggle('on', b === t)); $('fc').value = draft.c; $('fch').textContent = draft.c; $('fcl').classList.remove('on'); updPrev(); }
+  else if (t.id === 'fok') {
+    const n = $('fn').value.trim();
+    if (!n) { $('ferr').textContent = 'Cal escriure un nom.'; return; }
+    const em = parseEmoji($('fe').value);
+    if (em.err) { $('ferr').textContent = em.err; return; }
+    if (!/^#[0-9a-f]{6}$/i.test(draft.c)) draft.c = COLORS[0];
+    t.disabled = true;
+    const row = { name: n, emoji: em.v, color: draft.c.toLowerCase() };
+    const r = draft.id == null ? await sb.from('subjects').insert({ ...row, position: subjects.length }) : await sb.from('subjects').update(row).eq('id', draft.id);
+    if (r.error) { $('ferr').textContent = 'No s’ha pogut desar: ' + r.error.message; t.disabled = false; return; }
+    await loadData(); closeModal(); renderAll();
+  }
+});
+
+// ---- Detall d'assignatura, trimestres i exàmens ----
+function openExam(sid, term, id) {
+  const s = subjects.find(x => x.id === sid), e = id && s.ex.find(x => x.id === id);
+  xd = { sid, term, id: id || null };
+  openModal(`<h2>${e ? 'Editar' : 'Afegir'} examen</h2><label>Nom</label><input id="xn" maxlength="40" value="${esc(e ? e.name : '')}" placeholder="Per exemple: Examen tema 1">
+    <label>Nota sobre 10 (buit = encara pendent)</label><input id="xg" inputmode="decimal" value="${e && e.grade != null ? String(e.grade).replace('.', ',') : ''}" placeholder="7,5">
+    <label>Percentatge del trimestre (%)</label><input id="xw" inputmode="decimal" value="${e ? String(e.weight).replace('.', ',') : ''}" placeholder="20">
+    <label>Data (opcional)</label><input id="xdt" type="date" value="${(e && e.exam_date) || ''}">
+    <div class="err" id="ferr"></div><button class="btn" id="xok">Desar</button><button class="btn soft" id="fno">Cancel·lar</button>`);
+}
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-open],[data-term],[data-back],[data-goto],[data-eadd],[data-eed],[data-edel],[data-edok],[data-goal],[data-simfill],[data-simtoggle],[data-goaltoggle],#xok'); if (!t) return;
+  const d = t.dataset, s = subjects.find(x => x.id === cur.sid), top = () => window.scrollTo({ top: 0 });
+  if (d.open || d.back || (d.term != null && d.term !== '')) simGoal = null, simOpen = goalOpen = false;
+  if (d.goto) goTo(d.goto);
+  else if (d.open) { cur = { sid: d.open, term: null }; renderLlista(); top(); }
+  else if (d.term != null && d.term !== '') { cur.term = +d.term; renderLlista(); top(); }
+  else if (d.back) { if (cur.term != null) cur.term = null; else cur.sid = null; renderLlista(); top(); }
+  else if (d.simtoggle) { simOpen = !simOpen; $('simPanel').hidden = !simOpen; t.setAttribute('aria-expanded', simOpen); }
+  else if (d.goaltoggle) { goalOpen = !goalOpen; $('goalPanel').hidden = !goalOpen; t.setAttribute('aria-expanded', goalOpen); }
+  else if (d.goal) { $('gt').value = String(d.goal); goalCalc(); }
+  else if (d.simfill) { const x = s.ex.find(q => q.id === d.simfill); $('sn').value = x.name; $('sw').value = String(x.weight).replace('.', ','); $('sg').focus(); simCalc(); }
+  else if (d.eadd) openExam(cur.sid, +d.eadd, null);
+  else if (d.eed) openExam(cur.sid, cur.term + 1, d.eed);
+  else if (d.edel) { const x = s.ex.find(q => q.id === d.edel); openModal(`<h2>Eliminar examen</h2><p style="line-height:1.5">Segur que vols eliminar <b>${esc(x.name)}</b>?</p><button class="btn danger" data-edok="${x.id}">Sí, eliminar</button><button class="btn soft" id="fno">Cancel·lar</button>`); }
+  else if (d.edok) {
+    t.disabled = true; const r = await sb.from('exams').delete().eq('id', d.edok);
+    if (r.error) { t.disabled = false; alert('No s’ha pogut eliminar: ' + r.error.message); return; }
+    await loadData(); closeModal(); renderAll();
+  } else if (t.id === 'xok') {
+    const sx = subjects.find(q => q.id === xd.sid), n = $('xn').value.trim(), g = num($('xg').value), w = num($('xw').value), dt = $('xdt').value || null, er = m => { $('ferr').textContent = m; };
+    const altres = sx.ex.filter(q => q.term === xd.term && q.id !== xd.id).reduce((a, q) => a + q.weight, 0);
+    if (!n) return er('Cal escriure un nom.');
+    if (g != null && (isNaN(g) || g < 0 || g > 10)) return er('La nota ha de ser un número entre 0 i 10.');
+    if (w == null || isNaN(w) || w <= 0 || w > 100) return er('El percentatge ha de ser entre 0 i 100.');
+    if (altres + w > 100.0001) return er('Amb aquest examen els percentatges sumarien ' + pf(altres + w) + '%. El màxim és 100%.');
+    t.disabled = true;
+    const row = { subject_id: xd.sid, term: xd.term, name: n, grade: g, weight: w, exam_date: dt };
+    const r = xd.id ? await sb.from('exams').update(row).eq('id', xd.id) : await sb.from('exams').insert(row);
+    if (r.error) { t.disabled = false; return er('No s’ha pogut desar: ' + r.error.message); }
+    await loadData(); closeModal(); renderAll();
+  }
+});
+renderAll();
+
+// ---- Compte: autenticació amb Supabase Auth ----
+const REDIR = location.href.split('#')[0].split('?')[0];
+let passOpen = false, mailOpen = false, profile = null, ready = false, recovery = false, mode = 'login', amsg = null;
+const goTo = n => document.querySelector('nav button[data-s="' + n + '"]').click();
+const msgH = f => amsg && amsg.f === f ? `<p class="msg ${amsg.t}">${amsg.h}</p>` : '';
+function say(t, h, f) { amsg = { t, h, f }; const m = $(f ? 'amsg_' + f : 'amsg'); if (m) m.innerHTML = msgH(f); else renderAuth(); }
+function trErr(e) {
+  const m = ((e && e.message) || '').toLowerCase();
+  if (m.includes('invalid login')) return 'Correu o contrasenya incorrectes.';
+  if (m.includes('not confirmed')) return 'Encara has de confirmar el correu. Mira la bústia (i la carpeta de correu brossa).';
+  if (m.includes('already registered') || m.includes('already been registered')) return 'Aquest correu ja està registrat. Prova d’iniciar sessió.';
+  if (m.includes('at least') || m.includes('weak')) return 'La contrasenya és massa curta o massa fàcil.';
+  if (m.includes('same password') || m.includes('different from the old')) return 'La nova contrasenya ha de ser diferent de l’anterior.';
+  if (m.includes('reauth')) return 'Per seguretat, tanca la sessió, torna a entrar i repeteix el canvi.';
+  if (m.includes('invalid') && m.includes('email')) return 'El correu electrònic no és vàlid.';
+  if (m.includes('rate limit') || (e && e.status === 429)) return 'Has fet massa intents. Espera una estona i torna-ho a provar.';
+  if (m.includes('failed to fetch') || m.includes('network')) return 'No hi ha connexió amb el servidor.';
+  return 'Error: ' + esc((e && e.message) || e);
+}
+async function loadProfile() {
+  const meta = (user.user_metadata && user.user_metadata.nickname) || null;
+  const r = await sb.from('profiles').select('nickname').eq('id', user.id).maybeSingle();
+  if (r.error) { profile = { id: user.id, nickname: meta }; return; }
+  if (r.data) { profile = { id: user.id, nickname: r.data.nickname }; return; }
+  // Primer cop que entra: es crea el perfil amb el sobrenom escollit al registre
+  const ins = await sb.from('profiles').insert({ id: user.id, nickname: meta }).select('nickname').single();
+  profile = { id: user.id, nickname: ins.error ? meta : ins.data.nickname };
+}
+function renderAuth() {
+  const el = $('auth'), box = h => `<div class="box">${h}</div>`, M = '<div id="amsg">' + msgH() + '</div>';
+  $('authPass').innerHTML = '';
+  if (!sb) { el.innerHTML = box('<b>Compte</b><p class="msg warn">Primer cal posar l’adreça i la clau de Supabase al fitxer.</p>'); return; }
+  if (!ready) { el.innerHTML = box('<p class="msg">Carregant…</p>'); return; }
+  if (recovery) {
+    el.innerHTML = box(`<b>Nova contrasenya</b><form id="fNew" class="f"><label>Escriu la nova contrasenya (mínim 8 caràcters)</label>
+      <input name="p" type="password" minlength="8" autocomplete="new-password" required>${M}<button class="btn" type="submit">Desar la contrasenya</button></form>`);
+    return;
+  }
+  if (user) {
+    const nick = (profile && profile.nickname) || '—';
+    const since = user.created_at ? new Date(user.created_at).toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+    const pend = user.new_email ? `<div class="rowd"><span>Canvi de correu pendent</span><b>${esc(user.new_email)}</b></div>` : '';
+    const fm = (id, h) => `<form id="${id}" class="f" novalidate>${h}</form>`;
+    el.innerHTML = box(`<div class="prof"><div class="emoji" style="--c:${COLORS[0]}">👤</div><div><b style="font-size:22px">${esc(nick)}</b><br><small style="color:var(--muted)">Sessió iniciada</small></div></div>`) +
+      box(`<div class="rowd"><span>Sobrenom</span><b>${esc(nick)}</b></div><div class="rowd"><span>Correu</span><b>${esc(user.email)}</b></div>${pend}
+        <div class="rowd" style="border:0"><span>Compte creat</span><b>${since}</b></div>`) +
+      box('<b>✏️ Sobrenom</b>' + fm('fNick', `<label>El teu sobrenom (2-20 caràcters)</label><input name="n" minlength="2" maxlength="20" value="${esc(nick === '—' ? '' : nick)}" autocomplete="nickname" required>
+        <div id="amsg_nick">${msgH('nick')}</div><button class="btn" type="submit">Desar el sobrenom</button>`)) +
+      M +
+      '<button class="btn soft" id="btnOut">Tancar sessió</button>';
+    // «Canviar correu»: mateixa presentació que «Canviar contrasenya» (fila discreta + desplegable)
+    const mailBlock = `<button type="button" class="rowbtn" id="mailToggle" data-mailtoggle="1" aria-expanded="${mailOpen}" aria-controls="mailPanel"><span>✉️</span>Canviar correu<span class="chev">›</span></button>
+      <div class="box" id="mailPanel" ${mailOpen ? '' : 'hidden'}>` + fm('fMail', `<label>Nou correu electrònic</label><input name="e" type="email" autocomplete="email" required>
+        <p class="msg" style="margin-top:8px;color:var(--muted)">T’enviarem un correu de confirmació. El correu no canviarà fins que el confirmis.</p>
+        <div id="amsg_mail">${msgH('mail')}</div><button class="btn" type="submit">Canvia el correu</button>`) + '</div>';
+    // «Canviar contrasenya»: fila discreta al final de la secció que obre i tanca el formulari
+    $('authPass').innerHTML = mailBlock + `<button type="button" class="rowbtn" id="passToggle" data-passtoggle="1" aria-expanded="${passOpen}" aria-controls="passPanel"><span>🔒</span>Canviar contrasenya<span class="chev">›</span></button>
+      <div class="box" id="passPanel" ${passOpen ? '' : 'hidden'}>` + fm('fPass', `<label>Contrasenya actual</label><input name="c" type="password" autocomplete="current-password" required>
+        <label>Nova contrasenya (mínim 8 caràcters)</label><input name="p" type="password" minlength="8" autocomplete="new-password" required>
+        <label>Repeteix la nova contrasenya</label><input name="p2" type="password" minlength="8" autocomplete="new-password" required>
+        <div id="amsg_pass">${msgH('pass')}</div><button class="btn" type="submit">Canvia la contrasenya</button>`) + '</div>';
+    return;
+  }
+  const tabs = ['login', 'signup'].includes(mode)
+    ? `<div class="chips" style="justify-content:center"><button class="chip ${mode === 'login' ? 'on' : ''}" data-am="login">Inicia sessió</button><button class="chip ${mode === 'signup' ? 'on' : ''}" data-am="signup">Registra’t</button></div>` : '';
+  const em = '<label>Correu electrònic</label><input name="e" type="email" autocomplete="email" required>';
+  let f;
+  if (mode === 'signup') f = `<form id="fSignup" class="f"><label>Sobrenom</label><input name="n" minlength="2" maxlength="20" autocomplete="nickname" required>${em}
+    <label>Contrasenya (mínim 8 caràcters)</label><input name="p" type="password" minlength="8" autocomplete="new-password" required>${M}<button class="btn" type="submit">Crea el compte</button></form>`;
+  else if (mode === 'reset') f = `<b>Recuperar la contrasenya</b><form id="fReset" class="f"><label>Correu del teu compte</label><input name="e" type="email" autocomplete="email" required>${M}
+    <button class="btn" type="submit">Envia l’enllaç</button><button type="button" class="link" data-am="login">← Tornar a iniciar sessió</button></form>`;
+  else f = `<form id="fLogin" class="f">${em}<label>Contrasenya</label><input name="p" type="password" autocomplete="current-password" required>${M}
+    <button class="btn" type="submit">Inicia sessió</button><button type="button" class="link" data-am="reset">He oblidat la contrasenya</button></form>`;
+  el.innerHTML = tabs + box(f);
+}
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, btn = f.querySelector('button[type=submit]'), d = Object.fromEntries(new FormData(f));
+  if (!sb || !btn) return;
+  btn.disabled = true; amsg = null; document.querySelectorAll('[id^=amsg]').forEach(x => { x.innerHTML = ''; });
+  try {
+    if (f.id === 'fLogin') {
+      const { error } = await sb.auth.signInWithPassword({ email: d.e.trim(), password: d.p });
+      if (error) say('warn', trErr(error));
+    } else if (f.id === 'fSignup') {
+      const { data, error } = await sb.auth.signUp({ email: d.e.trim(), password: d.p, options: { data: { nickname: d.n.trim() }, emailRedirectTo: REDIR } });
+      if (error) say('warn', trErr(error));
+      else if (data.user && data.user.identities && data.user.identities.length === 0) say('warn', 'Aquest correu ja està registrat. Prova d’iniciar sessió.');
+      else if (!data.session) { mode = 'login'; amsg = { t: 'ok', h: 'Compte creat! T’hem enviat un correu per confirmar-lo. Obre l’enllaç i després inicia sessió.' }; renderAuth(); }
+    } else if (f.id === 'fReset') {
+      const { error } = await sb.auth.resetPasswordForEmail(d.e.trim(), { redirectTo: REDIR });
+      if (error) say('warn', trErr(error)); else say('ok', 'Si el correu existeix, t’hem enviat un enllaç per crear una contrasenya nova.');
+    } else if (f.id === 'fNew') {
+      const { error } = await sb.auth.updateUser({ password: d.p });
+      if (error) say('warn', trErr(error)); else { recovery = false; amsg = { t: 'ok', h: 'Contrasenya actualitzada.' }; renderAuth(); }
+    } else if (f.id === 'fNick') {
+      const n = d.n.trim();
+      if (n.length < 2 || n.length > 20) say('warn', 'El sobrenom ha de tenir entre 2 i 20 caràcters.', 'nick');
+      else if (profile && n === profile.nickname) say('warn', 'Aquest ja és el teu sobrenom actual.', 'nick');
+      else {
+        const r = await sb.from('profiles').upsert({ id: user.id, nickname: n }).select('nickname').single();
+        if (r.error) say('warn', 'No s’ha pogut desar el sobrenom: ' + esc(r.error.message), 'nick');
+        else { profile = { id: user.id, nickname: r.data.nickname }; amsg = { t: 'ok', h: 'Sobrenom actualitzat.', f: 'nick' }; renderAuth(); }
+      }
+    } else if (f.id === 'fMail') {
+      const e2 = d.e.trim();
+      if (!/^\S+@\S+\.\S+$/.test(e2)) say('warn', 'Escriu un correu electrònic vàlid.', 'mail');
+      else if (e2.toLowerCase() === (user.email || '').toLowerCase()) say('warn', 'Aquest ja és el teu correu actual.', 'mail');
+      else {
+        const { error } = await sb.auth.updateUser({ email: e2 }, { emailRedirectTo: REDIR });
+        if (error) say('warn', trErr(error), 'mail');
+        else { amsg = { t: 'ok', h: `Revisa la bústia: t’hem enviat un correu de confirmació a <b>${esc(e2)}</b>. Pot ser que també te’n arribi un a l’adreça actual. El canvi es completa quan confirmis els correus; fins aleshores continues entrant amb el correu actual.`, f: 'mail' }; renderAuth(); }
+      }
+    } else if (f.id === 'fPass') {
+      if (!d.c) say('warn', 'Escriu la teva contrasenya actual.', 'pass');
+      else if (d.p.length < 8) say('warn', 'La nova contrasenya ha de tenir almenys 8 caràcters.', 'pass');
+      else if (d.p !== d.p2) say('warn', 'Les dues contrasenyes noves no coincideixen.', 'pass');
+      else if (d.p === d.c) say('warn', 'La nova contrasenya ha de ser diferent de l’actual.', 'pass');
+      else {
+        const chk = await sb.auth.signInWithPassword({ email: user.email, password: d.c });   // comprova la contrasenya actual
+        if (chk.error) say('warn', /invalid login/i.test(chk.error.message || '') ? 'La contrasenya actual no és correcta.' : trErr(chk.error), 'pass');
+        else {
+          const { error } = await sb.auth.updateUser({ password: d.p });
+          if (error) say('warn', trErr(error), 'pass');
+          else { amsg = { t: 'ok', h: 'Contrasenya canviada correctament.', f: 'pass' }; renderAuth(); }
+        }
+      }
+    }
+  } catch (x) { say('warn', trErr(x)); }
+  finally { btn.disabled = false; }
+});
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.am) { mode = t.dataset.am; amsg = null; renderAuth(); }
+  else if (t.dataset.mailtoggle) { mailOpen = !mailOpen; $('mailPanel').hidden = !mailOpen; t.setAttribute('aria-expanded', mailOpen); }
+  else if (t.dataset.passtoggle) { passOpen = !passOpen; $('passPanel').hidden = !passOpen; t.setAttribute('aria-expanded', passOpen); }
+  else if (t.id === 'btnOut') { t.disabled = true; await sb.auth.signOut(); }
+});
+if (sb) {
+  sb.auth.onAuthStateChange((ev, session) => {
+    user = session ? session.user : null;
+    if (ev === 'PASSWORD_RECOVERY') recovery = true;
+    if (ev === 'SIGNED_IN' && !recovery) amsg = null;
+    if (ev === 'SIGNED_OUT') { recovery = false; profile = null; mode = 'login'; amsg = { t: 'ok', h: 'Has tancat la sessió.' }; passOpen = false; mailOpen = false; }
+    setTimeout(async () => {   // fora de la funció d’esdeveniment, perquè Supabase no es bloquegi
+      if (user && (!profile || profile.id !== user.id)) await loadProfile();
+      if (user && dataUid !== user.id) { await loadData(); await loadSettings(); dataUid = user.id; }
+      if (!user) { subjects = []; dataUid = null; dataErr = null; cur = { sid: null, term: null }; }
+      ready = true; renderAuth(); renderAll();
+      if (ev === 'PASSWORD_RECOVERY') goTo('compte');
+    }, 0);
+  });
+}
+renderAuth();
+
+// ---- Estat de la connexió ----
+const estat = document.getElementById('estat');
+estat.innerHTML = sb
+  ? '<span class="ok">✔ Configurada.</span> Prem el botó per fer una prova real.'
+  : '<span class="warn">Encara no configurada.</span> Falten l’adreça i la clau pública de Supabase.';
+const TAULES = [['subjects','Assignatures'],['exams','Exàmens'],['profiles','Perfils'],['user_settings','Ajustos']];
+
+function diagnostic(f) {
+  const m = (f.error.message || '') + ' ' + (f.error.code || '');
+  if (f.status === 0 || /failed to fetch|networkerror/i.test(m))
+    return 'No s’arriba al servidor. Comprova que l’adreça (Project URL) sigui correcta.';
+  if (f.status === 401 || f.status === 403 || /invalid api key|jwt/i.test(m))
+    return 'La clau pública no és correcta o no té permís. Comprova que has copiat la clau anon/publishable.';
+  if (f.error.code === 'PGRST205' || f.error.code === '42P01' || f.status === 404)
+    return 'Falta la taula «' + f.t + '». Has executat tot el text de l’SQL Editor?';
+  return 'Error: ' + esc(f.error.message);
+}
+
+document.getElementById('btnProva').addEventListener('click', async (ev) => {
+  const btn = ev.currentTarget;
+  if (!sb) { estat.innerHTML = '<span class="warn">Primer cal posar l’adreça i la clau al fitxer.</span>'; return; }
+  btn.disabled = true; btn.textContent = 'Comprovant…';
+  estat.textContent = 'Fent una petició real a la base de dades…';
+  try {
+    // Petició real a cada taula (només compta files, no baixa dades)
+    const res = await Promise.all(TAULES.map(async ([t, n]) => {
+      const r = await sb.from(t).select('*', { count: 'exact', head: true });
+      return { t, n, error: r.error, status: r.status };
+    }));
+    const fallida = res.find(r => r.error);
+    estat.innerHTML = fallida
+      ? '<span class="warn">✖ ' + diagnostic(fallida) + '</span>'
+      : '<span class="ok">✔ La base de dades respon i les ' + res.length + ' taules existeixen.</span>';
+  } catch (e) {
+    estat.innerHTML = '<span class="warn">✖ No s’ha pogut connectar: ' + esc(e.message || e) + '</span>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Provar la connexió';
+  }
+});
+</script>
+</body>
+</html>
