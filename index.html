@@ -15,12 +15,12 @@
   --blue:#7c9cff; --orange:#f4b26e; --purple:#b49cf5; --green:#8fd9a0; --pink:#f59cc0;
   --radius:32px; --nav-h:78px; --w:560px;
   --ink:#fff; --ink2:#dbe1ff; --line:#ffffff1f; --track:#ffffff33; --hover:#ffffff0d; --m1:#242d66; --m2:#1a2149;
-  --navc:#cdd5ff; --navon:#fff; --okc:#8fd9a0; --warnc:#f4b26e; --linkc:#7c9cff; color-scheme:dark;
+  --navc:#cdd5ff; --navon:#fff; --okc:#8fd9a0; --warnc:#f4b26e; --linkc:#7c9cff; --bad:#f58c8c; --gen:#5aa9ff; color-scheme:dark;
 }
 :root[data-theme=light]{
   --bg:#eef1fb; --card:#ffffff; --card2:#e6eaf8; --text:#1a2147; --muted:#56608f;
   --ink:#1a2147; --ink2:#3b4575; --line:#1a214726; --track:#1a21471f; --hover:#1a21470d; --m1:#ffffff; --m2:#f3f5ff;
-  --navc:#56608f; --navon:#1a2147; --okc:#1d8a4c; --warnc:#b45309; --linkc:#3b5bdb; color-scheme:light;
+  --navc:#56608f; --navon:#1a2147; --okc:#1d8a4c; --warnc:#b45309; --linkc:#3b5bdb; --bad:#c0392b; --gen:#2f7de1; color-scheme:light;
 }
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -193,6 +193,34 @@ nav button.on::before{display:none}
 .sheet input[type=checkbox]{width:22px;height:22px;padding:0;flex:none}
 .qe button.qmore{border-radius:50%;background:var(--blue);color:#0b1026;font-weight:800;font-size:26px;line-height:1}
 emoji-picker{width:100%;height:min(420px,55vh);margin-bottom:12px;--background:var(--card);--border-color:var(--line);--border-size:1px;--indicator-color:var(--blue);--input-border-color:var(--line);--input-font-color:var(--text);--input-placeholder-color:var(--muted);--category-font-color:var(--muted);--button-hover-background:var(--card2);--button-active-background:var(--card2);--outline-color:var(--blue);--num-columns:8}
+/* estadístiques (disseny nou) */
+.sgrid{display:flex;flex-direction:column;gap:16px}
+.stat3 .s3h{display:flex;align-items:center;gap:12px}
+.s3i{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:color-mix(in srgb,var(--c) 48%,transparent);flex:none}
+.s3l{color:var(--muted);font-size:14px;font-weight:700}
+.s3v{font-size:36px;font-weight:800;margin:12px 0 2px;color:var(--ink)}
+.s3s{font-size:13px;color:var(--ink2)}
+.bdg{margin-left:auto;padding:5px 11px;border-radius:99px;font-size:13px;font-weight:800;white-space:nowrap}
+.bdg.up{background:color-mix(in srgb,var(--okc) 22%,transparent);color:var(--okc)}
+.bdg.dn{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.lgc{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700}
+.lgc i{width:11px;height:11px;border-radius:50%;flex:none}
+.lgc.gen{padding:10px 4px;color:var(--text)}
+button.lgc{padding:9px 14px;border:0;cursor:pointer;color:var(--text);background:var(--card)}
+button.lgc.foc{box-shadow:0 0 0 2px var(--text)}
+.dn-wrap{display:flex;align-items:center;gap:16px;margin-top:10px}
+.dn-wrap svg{width:min(170px,42%);height:auto}
+.dn-leg{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;font-size:13px}
+.dn-leg div{display:flex;align-items:center;gap:8px}
+.dn-leg i{width:10px;height:10px;border-radius:50%;flex:none}
+.dn-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dn-leg b{font-weight:800;font-size:14px}
+.sgrid .lp b{font-size:18px;width:58px}
+@media (min-width:900px){
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch}
+  .sg-chart{grid-column:1/3;grid-row:2/4}
+}
 </style>
 </head>
 <body>
@@ -253,6 +281,7 @@ emoji-picker{width:100%;height:min(420px,55vh);margin-bottom:12px;--background:v
 // ---- Configuració de Supabase (aquí enganxaràs les teves dues dades) ----
 const SUPABASE_URL = 'https://cbzwjxjpvblxzlonpzta.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_m9PaEPG633oHNTCOQp6m5Q_8ZyUWIqE';
+
 let sb = null;
 try {
   if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
@@ -271,7 +300,7 @@ document.querySelectorAll('nav button').forEach(b => b.addEventListener('click',
 const $ = id => document.getElementById(id);
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const COLORS = ['#7c9cff','#f4b26e','#b49cf5','#8fd9a0','#f59cc0','#f2d37a','#6fd6d6'];
-let subjects = [], rankK = 'g', draft = null, user = null, cur = { sid: null, term: null }, dataErr = null, dataUid = null, xd = null, simGoal = null, simOpen = false, goalOpen = false;
+let subjects = [], rankK = 'g', draft = null, user = null, cur = { sid: null, term: null }, dataErr = null, dataUid = null, xd = null, simGoal = null, simOpen = false, goalOpen = false, statsFocus = null;
 const fmt = n => n == null ? '—' : n.toFixed(1).replace('.', ',');
 const mean = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
 const gen = s => mean(s.t);
@@ -443,38 +472,66 @@ function renderStats() {
   const el = $('stats'); if (gate(el)) return;
   const gs = subjects.filter(s => gen(s) != null);
   if (!gs.length) { el.innerHTML = buit('📊', subjects.length ? 'Encara no hi ha cap examen amb nota. Entra en una assignatura, afegeix un examen i posa-hi la nota: aquí apareixeran les teves estadístiques.' : 'Crea una assignatura a Ajustos i afegeix-hi exàmens amb nota. Les estadístiques es calculen només amb les teves dades reals.'); return; }
-  const tm = [0, 1, 2].map(i => mean(subjects.map(s => s.t[i]))), over = mean(gs.map(gen));
+  if (statsFocus && !gs.some(s => s.id === statsFocus)) statsFocus = null;
+  const tm = [0, 1, 2].map(i => mean(subjects.map(s => s.t[i]))), over = mean(gs.map(gen)), tv = tm.filter(v => v != null);
   const comp = subjects.reduce((a, s) => a + s.cs.reduce((b, c) => b + (c.over ? 0 : c.ev), 0), 0) / (3 * subjects.length);
   const exams = subjects.reduce((a, s) => a + s.x, 0);
   const sorted = [...gs].sort((a, b) => gen(b) - gen(a)), best = sorted[0], worst = sorted[sorted.length - 1];
-  const apr = gs.filter(s => gen(s) >= 5).length, sense = subjects.length - gs.length;
+  const apr = gs.filter(s => gen(s) >= 5).length, pct = Math.round(apr / gs.length * 100), sense = subjects.length - gs.length;
   const evo = gs.map(s => { const v = s.t.filter(x => x != null); return { s, f: v[0], d: v.length > 1 ? v[v.length - 1] - v[0] : null }; }).filter(o => o.d != null && o.f > 0).sort((a, b) => b.d / b.f - a.d / a.f);
-  const W = innerWidth < 600 ? 400 : 600, X = W === 400 ? [60, 200, 340] : [70, 300, 530], Y = v => 190 - v * 17, pts = vals => vals.map((v, i) => v == null ? null : X[i] + ',' + Y(v)).filter(Boolean);
-  const lines = gs.map(s => { const last = s.t.reduce((a, v, i) => v == null ? a : i, 0);
-    return `<polyline points="${pts(s.t).join(' ')}" fill="none" stroke="${s.c}" stroke-width="3" stroke-linejoin="round"/>` +
-      s.t.map((v, i) => v == null ? '' : `<circle cx="${X[i]}" cy="${Y(v)}" r="5" fill="${s.c}"/>`).join('') +
-      `<text x="${X[last] + 11}" y="${Y(s.t[last]) + 5}" font-size="15">${s.e}</text>`; }).join('');
-  const gl = `<polyline points="${pts(tm).join(' ')}" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
-    tm.map((v, i) => v == null ? '' : `<circle cx="${X[i]}" cy="${Y(v)}" r="8" style="fill:var(--bg)" stroke="currentColor" stroke-width="4"/>`).join('');
-  const grid = [0, 5, 10].map(v => `<line x1="30" x2="${W - 30}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity="${v === 5 ? .5 : .15}" ${v === 5 ? 'stroke-dasharray="6 6"' : ''}/><text x="4" y="${Y(v) + 5}" font-size="13" style="fill:var(--muted)">${v}</text>`).join('');
-  const xl = ['1r', '2n', '3r'].map((t, i) => `<text x="${X[i]}" y="216" text-anchor="middle" font-size="14" style="fill:var(--muted)">${t} trimestre${tm[i] == null ? '' : ' · <tspan font-weight="800" fill="currentColor">' + fmt(tm[i]) + '</tspan>'}</text>`).join('');
+  const dTm = tv.length > 1 ? tv[tv.length - 1] - tv[tv.length - 2] : null;
+  const sg = d => (d > 0.005 ? '+' : d < -0.005 ? '−' : '') + fmt(Math.abs(d));
+
+  // ---- gràfica d'evolució: corbes suaus, punts amb halo i àrea ombrejada ----
+  const mob = innerWidth < 600, W = mob ? 400 : innerWidth < 900 ? 720 : 760, H = mob ? 320 : innerWidth < 900 ? 330 : 480, pL = 38, pR = 26, pT = 40, pB = 46, iw = W - pL - pR, ih = H - pT - pB;
+  const X = [0.1, 0.5, 0.9].map(f => Math.round(pL + iw * f)), Y = v => +(pT + (1 - v / 10) * ih).toFixed(1), cl = y => Math.min(Math.max(y, Y(10)), Y(0));
+  const smooth = p => { let d = 'M' + p[0][0] + ',' + p[0][1];
+    for (let i = 0; i < p.length - 1; i++) { const a = p[i - 1] || p[i], b = p[i], c = p[i + 1], e = p[i + 2] || c;
+      d += ` C${(b[0] + (c[0] - a[0]) / 6).toFixed(1)},${cl(b[1] + (c[1] - a[1]) / 6).toFixed(1)} ${(c[0] - (e[0] - b[0]) / 6).toFixed(1)},${cl(c[1] - (e[1] - b[1]) / 6).toFixed(1)} ${c[0]},${c[1]}`; }
+    return d; };
+  const pts = vals => vals.map((v, i) => v == null ? null : [X[i], Y(v), i, v]).filter(Boolean);
+  const runs = p => { const r = []; p.forEach(q => { const l = r[r.length - 1]; if (l && q[2] - l[l.length - 1][2] === 1) l.push(q); else r.push([q]); }); return r; };
+  const line = (vals, col, w, op) => { const rr = runs(pts(vals)); return rr.map((r, k) =>
+    (r.length > 1 ? `<path d="${smooth(r)}" fill="none" style="stroke:${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>` : '') +
+    (k > 0 ? `<line x1="${rr[k - 1][rr[k - 1].length - 1][0]}" y1="${rr[k - 1][rr[k - 1].length - 1][1]}" x2="${r[0][0]}" y2="${r[0][1]}" style="stroke:${col}" stroke-width="${w}" stroke-dasharray="1 9" stroke-linecap="round" opacity="${op * .8}"/>` : '')).join(''); };
+  const dots = (vals, col, r, op) => pts(vals).map(q => `<circle cx="${q[0]}" cy="${q[1]}" r="${r + 5}" style="fill:${col}" opacity="${op * .28}"/><circle cx="${q[0]}" cy="${q[1]}" r="${r}" fill="#fff" style="stroke:${col}" stroke-width="${r > 6 ? 4 : 3}" opacity="${op}"/>`).join('');
+  const lab = (vals, dy, size, bold) => pts(vals).map(q => `<text x="${q[0]}" y="${q[1] + dy}" text-anchor="middle" font-size="${size}" font-weight="${bold}" style="fill:var(--text);paint-order:stroke;stroke:var(--card);stroke-width:4px">${fmt(q[3])}</text>`).join('');
+  const grid = [0, 2.5, 5, 7.5, 10].map(v => `<line x1="${pL}" x2="${W - pR}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity="${v === 5 ? .45 : .14}" ${v === 5 ? 'stroke-dasharray="6 6"' : ''}/>` +
+    ([0, 5, 10].includes(v) ? `<text x="${pL - 10}" y="${Y(v) + 4}" text-anchor="end" font-size="12" style="fill:var(--muted)">${v}</text>` : '')).join('');
+  const xl = X.map((x, i) => `<text x="${x}" y="${H - 16}" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--muted)">${['1r', '2n', '3r'][i]} trimestre</text>` +
+    (tm[i] == null ? `<line x1="${x}" x2="${x}" y1="${pT}" y2="${Y(0)}" stroke="currentColor" stroke-opacity=".18" stroke-dasharray="3 6"/><text x="${x}" y="${(pT + Y(0)) / 2}" text-anchor="middle" font-size="12" style="fill:var(--muted)">sense notes</text>` : '')).join('');
+  const dif = [0, 1].map(i => { if (tm[i] == null || tm[i + 1] == null) return ''; const d = tm[i + 1] - tm[i], x = (X[i] + X[i + 1]) / 2, col = d >= 0 ? 'var(--okc)' : 'var(--bad)';
+    return `<rect x="${x - 36}" y="4" width="72" height="24" rx="12" style="fill:var(--card2);stroke:${col}" stroke-opacity=".5"/><text x="${x}" y="20" text-anchor="middle" font-size="13" font-weight="800" style="fill:${col}">${d >= 0 ? '▲' : '▼'} ${sg(d)}</text>`; }).join('');
+  const gp = runs(pts(tm)).filter(r => r.length > 1).map(r => `<path d="${smooth(r)} L${r[r.length - 1][0]},${Y(0)} L${r[0][0]},${Y(0)} Z" fill="url(#gArea)"/>`).join('');
+  const subj = gs.map(s => { const f = statsFocus ? (s.id === statsFocus ? 1 : 0) : null, op = f === null ? .95 : f ? 1 : .16;
+    return line(s.t, s.c, f ? 4.5 : 3, op) + dots(s.t, s.c, 4.5, op) + (f ? lab(s.t, -16, 13, 800) : ''); });
+  const chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolució de les notes per trimestres"><defs><linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gen);stop-opacity:.42"/><stop offset="1" style="stop-color:var(--gen);stop-opacity:0"/></linearGradient></defs>
+    ${grid}${gp}${subj.join('')}${line(tm, 'var(--gen)', 5.5, 1)}${dots(tm, 'var(--gen)', 7, 1)}${lab(tm, -20, 16, 800)}${xl}${dif}</svg>`;
+  const legend = `<div class="legend"><span class="lgc gen"><i style="background:var(--gen)"></i>Mitjana general</span>${sorted.map(s => `<button class="chip lgc ${statsFocus === s.id ? 'foc' : ''}" data-lg="${s.id}"><i style="background:${s.c}"></i>${s.e} ${esc(s.n)}</button>`).join('')}</div>
+    <p class="msg" style="margin-top:10px;color:var(--muted);font-size:13px">${statsFocus ? 'Toca de nou l’assignatura per tornar a veure-les totes.' : 'Toca una assignatura per ressaltar-la i veure’n les notes a cada trimestre.'}</p>`;
+
+  // ---- cercle d'anells concèntrics (nota de cada assignatura) i barres d'avaluació ----
+  const rn = Math.min(sorted.length, 6), rw = Math.max(6, Math.min(14, Math.floor(60 / rn))), st = rw + 3;
+  const rings = sorted.slice(0, rn).map((s, k) => { const r = 80 - k * st - rw / 2, c = 2 * Math.PI * r;
+    return `<circle cx="90" cy="90" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="${rw}"/><circle cx="90" cy="90" r="${r}" fill="none" stroke="${s.c}" stroke-width="${rw}" stroke-linecap="round" stroke-dasharray="${(gen(s) / 10 * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 90 90)"/>`; }).join('');
+  const donut = `<div class="dn-wrap"><svg viewBox="0 0 180 180" style="flex:none" role="img" aria-label="Nota de cada assignatura">${rings}${rn <= 4 ? `<text x="90" y="98" text-anchor="middle" font-size="26" font-weight="800" fill="currentColor">${fmt(over)}</text>` : ''}</svg>
+    <div class="dn-leg">${sorted.map(s => `<div><i style="background:${s.c}"></i><span>${s.e} ${esc(s.n)}</span><b>${fmt(gen(s))}</b></div>`).join('')}</div></div>
+    ${sorted.length > 6 ? '<p class="msg" style="font-size:13px;color:var(--muted)">El cercle mostra les 6 millors notes; la llista, totes.</p>' : ''}${sense ? `<p class="msg" style="font-size:13px;color:var(--muted)">${sense} assignatura${sense > 1 ? 's' : ''} sense notes encara no es compte${sense > 1 ? 'n' : ''}.</p>` : ''}`;
+  const bars = subjects.map(s => { const ev = mean(s.cs.map(x => x.over ? 0 : x.ev));
+    return `<div class="lp" style="--c:${s.c}"><div class="emoji sm">${s.e}</div><div class="lpm"><div class="lpn">${esc(s.n)}<small>${pf(100 - ev)}% pendent</small></div><div class="trk"><i style="width:${ev}%"></i></div></div><b>${pf(ev)}%</b></div>`; }).join('');
+
+  const top = (c, ico, l, v, sub, bdg, cls) => `<div class="st stat3" style="--c:${c}"><div class="s3h"><div class="s3i">${ico}</div><div class="s3l">${l}</div>${bdg ? `<span class="bdg ${cls}">${bdg}</span>` : ''}</div><div class="s3v">${v}</div><div class="s3s">${sub}</div></div>`;
   const c = (col, l, t) => `<div class="st" style="--c:${col}"><div class="lbl">${l}</div><p>${t}</p></div>`;
-  const rows = sorted.map(s => { const g = gen(s), ev = mean(s.cs.map(x => x.over ? 0 : x.ev));
-    return `<div class="lp" style="--c:${s.c}"><div class="emoji sm">${s.e}</div><div class="lpm"><div class="lpn">${esc(s.n)}<small>${pf(ev)}% avaluat</small></div><div class="trk"><i style="width:${g * 10}%"></i><u></u></div></div><b>${fmt(g)}</b></div>`; }).join('');
-  el.innerHTML = `<div class="grid">
-    <div class="st span hero2" style="--c:${COLORS[0]}"><svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" style="stroke:var(--track)" stroke-width="12"/>
-      <circle cx="66" cy="66" r="56" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(over / 10 * 351.9).toFixed(1)} 351.9" transform="rotate(-90 66 66)"/>
-      <text x="66" y="76" text-anchor="middle" font-size="34" font-weight="800" fill="currentColor">${fmt(over)}</text></svg>
-      <div><div class="lbl">Mitjana general</div><p>Avaluació completada: ${pf(comp)}%<br><span style="color:var(--ink2);font-weight:500">Pendent: ${pf(100 - comp)}% · ${exams} exàmens fets</span></p>
-      <div class="bar" style="height:12px"><i style="width:${comp}%;background:var(--ink)"></i></div></div></div>
-    <div class="st span" style="--c:${COLORS[6]}"><div class="lbl">Evolució per trimestres (línia gruixuda = mitjana general)</div>
-      <svg class="chart" viewBox="0 0 ${W} 224">${grid}${lines}${gl}${xl}</svg>
-      ${tm.filter(v => v != null).length < 2 ? '<p class="msg">Amb notes en un sol trimestre encara no es pot veure l’evolució.</p>' : ''}</div>
-    <div class="st span" style="--c:${COLORS[2]}"><div class="lbl">Rendiment per assignatura (la ratlla vertical marca el 5)</div>${rows}
-      ${sense ? `<p class="msg">${sense} assignatura${sense > 1 ? 's' : ''} sense notes encara no es compte${sense > 1 ? 'n' : ''}.</p>` : ''}</div></div>
+  el.innerHTML = `<div class="sgrid">
+    ${top('#5aa9ff', '📊', 'Mitjana general', fmt(over), dTm == null ? `${gs.length} assignatura${gs.length > 1 ? 's' : ''} amb notes` : 'respecte al trimestre anterior', dTm == null ? '' : (dTm >= 0 ? '▲ ' : '▼ ') + sg(dTm), dTm >= 0 ? 'up' : 'dn')}
+    ${top('#7c9cff', '✅', 'Aprovades', `${apr}/${gs.length}`, `${pct}% de les assignatures amb notes`, pct + '%', pct >= 50 ? 'up' : 'dn')}
+    ${top('#6fd6d6', '📝', 'Avaluació completada', pf(comp) + '%', `Pendent: ${pf(100 - comp)}% · ${exams} ${exams === 1 ? 'examen fet' : 'exàmens fets'}`, '', '')}
+    <div class="st sg-chart" style="--c:#5aa9ff"><div class="lbl">Evolució per trimestres</div>${chart}
+      ${tv.length < 2 ? '<p class="msg">Amb notes en un sol trimestre encara no es pot veure l’evolució.</p>' : ''}${legend}</div>
+    <div class="st sg-donut" style="--c:#7c9cff"><div class="lbl">Nota per assignatura</div>${donut}</div>
+    <div class="st sg-bars" style="--c:#5aa9ff"><div class="lbl">Avaluació completada per assignatura</div>${bars}</div></div>
     <div class="g2">${c(COLORS[3], '🥇 Millor resultat', `${esc(best.n)}<br>${fmt(gen(best))}`)}
       ${gs.length > 1 ? c(COLORS[4], '🎯 A millorar', `${esc(worst.n)}<br>${fmt(gen(worst))}`) : ''}
-      ${c(COLORS[5], '✅ Aprovades', `${apr} de ${gs.length} (${Math.round(apr / gs.length * 100)}%)`)}
       ${evo.length && evo[0].d > 0 ? c(COLORS[1], '🚀 Millor evolució', `${esc(evo[0].s.n)}<br>+${Math.round(evo[0].d / evo[0].f * 100)}%`) : ''}
       ${evo.length && evo[evo.length - 1].d < 0 ? c(COLORS[4], '📉 Per vigilar', `${esc(evo[evo.length - 1].s.n)}<br>${Math.round(evo[evo.length - 1].d / evo[evo.length - 1].f * 100)}%`) : ''}</div>`;
 }
@@ -713,13 +770,14 @@ function openExam(sid, term, id) {
     <div class="err" id="ferr"></div><button class="btn" id="xok">Desar</button><button class="btn soft" id="fno">Cancel·lar</button>`);
 }
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-open],[data-term],[data-back],[data-goto],[data-eadd],[data-eed],[data-edel],[data-edok],[data-goal],[data-simfill],[data-simtoggle],[data-goaltoggle],#xok'); if (!t) return;
+  const t = e.target.closest('[data-open],[data-term],[data-back],[data-goto],[data-eadd],[data-eed],[data-edel],[data-edok],[data-goal],[data-simfill],[data-simtoggle],[data-goaltoggle],[data-lg],#xok'); if (!t) return;
   const d = t.dataset, s = subjects.find(x => x.id === cur.sid), top = () => window.scrollTo({ top: 0 });
   if (d.open || d.back || (d.term != null && d.term !== '')) simGoal = null, simOpen = goalOpen = false;
   if (d.goto) goTo(d.goto);
   else if (d.open) { cur = { sid: d.open, term: null }; renderLlista(); top(); }
   else if (d.term != null && d.term !== '') { cur.term = +d.term; renderLlista(); top(); }
   else if (d.back) { if (cur.term != null) cur.term = null; else cur.sid = null; renderLlista(); top(); }
+  else if (d.lg) { statsFocus = statsFocus === d.lg ? null : d.lg; renderStats(); }
   else if (d.simtoggle) { simOpen = !simOpen; $('simPanel').hidden = !simOpen; t.setAttribute('aria-expanded', simOpen); }
   else if (d.goaltoggle) { goalOpen = !goalOpen; $('goalPanel').hidden = !goalOpen; t.setAttribute('aria-expanded', goalOpen); }
   else if (d.goal) { $('gt').value = String(d.goal); goalCalc(); }
